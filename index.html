@@ -192,6 +192,53 @@ dialog::backdrop { background: rgba(0, 0, 0, .6); }
 dialog .row { display: flex; gap: 10px; flex-wrap: wrap; margin: 18px 0 10px; }
 dialog ul { margin: 10px 0 0; padding-left: 20px; }
 
+/* ---------- browse ---------- */
+.searchbox { width: 340px; max-width: 100%; font: 400 17px/1.3 var(--ui); border-radius: 999px; padding: 7px 16px; }
+.filter-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+.filter-chips:empty { display: none; }
+.filter-chips .chip { background: var(--cat); color: #000; font-weight: 600; box-shadow: none; }
+.bulk {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 18px;
+  padding: 10px 14px; border-radius: 16px; background: var(--surface);
+}
+.bulk .count { font: 400 18px/1 var(--ui); margin-right: 6px; }
+.bulk .divider { width: 1.5px; align-self: stretch; background: var(--line); margin: 0 4px; }
+.bulk select { max-width: 260px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 20px 16px; margin-top: 20px; }
+.tile { position: relative; min-width: 0; }
+.tile-open { all: unset; display: block; cursor: pointer; width: 100%; border-radius: 4.75% / 3.4%; }
+.tile-open:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.tile img { display: block; width: 100%; height: auto; aspect-ratio: 488 / 680; border-radius: 4.75% / 3.4%; background: var(--surface); }
+.tile.selected img { outline: 4px solid var(--orange); outline-offset: 3px; }
+.tile-check {
+  position: absolute; top: 6px; right: 6px; display: grid; place-items: center;
+  width: 30px; height: 30px; border-radius: 50%; background: var(--bg); cursor: pointer;
+  box-shadow: 0 0 0 1.5px var(--line);
+}
+.tile-check input { width: 18px; height: 18px; margin: 0; accent-color: var(--orange); cursor: pointer; }
+.tile-name { font: 600 15px/1.25 var(--serif); margin-top: 7px; }
+.tile-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.tile-tags span {
+  font: 400 13px/1.2 var(--ui); padding: 2px 8px; border-radius: 999px; background: var(--cat); color: #000;
+}
+.empty-note { margin-top: 24px; color: var(--muted); max-width: 60ch; }
+
+/* ---------- archetypes ---------- */
+.pairs { display: flex; flex-wrap: wrap; gap: 8px; }
+.pair { display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px 5px 8px; }
+.pair img { width: 20px; height: 20px; }
+.pair-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 28px; margin-top: 22px; }
+.pair-col h3 { font: 600 24px/1.2 var(--ui); color: var(--heading); margin: 0 0 4px; display: flex; gap: 10px; align-items: baseline; }
+.pair-col h3 .n { font-weight: 400; font-size: 18px; color: var(--muted); }
+.pair-col .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); margin-top: 12px; }
+.also { margin-top: 36px; }
+.also details { border-top: 1.5px solid var(--line); padding: 10px 0; }
+.also summary { cursor: pointer; font: 600 19px/1.3 var(--ui); display: flex; gap: 10px; align-items: center; list-style: none; }
+.also summary::-webkit-details-marker { display: none; }
+.also summary::before { content: ""; width: 22px; height: 10px; border-radius: 5px; background: var(--cat); flex: none; }
+.also summary .n { font-weight: 400; color: var(--muted); }
+.also .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); margin-top: 14px; }
+
 /* ---------- toast ---------- */
 #toast {
   position: fixed; right: 24px; bottom: 24px; max-width: 440px; z-index: 10;
@@ -221,6 +268,8 @@ dialog ul { margin: 10px 0 0; padding-left: 20px; }
   </header>
   <nav class="side" aria-label="Screens">
     <button type="button" data-view="review">Review</button>
+    <button type="button" data-view="browse">Browse</button>
+    <button type="button" data-view="arch">Archetypes</button>
     <button type="button" data-view="tags">Tags</button>
     <button type="button" data-view="data">Data</button>
     <span class="seg" aria-hidden="true"></span>
@@ -230,35 +279,7 @@ dialog ul { margin: 10px 0 0; padding-left: 20px; }
   <main>
     <!-- Review -->
     <section id="view-review" aria-label="Review cards">
-      <div class="queue" id="queue">
-        <div class="qgroup" role="group" aria-label="Colors">
-          <span class="qlabel">Colors</span>
-          <button type="button" class="tog sym-tog" data-color="W" aria-pressed="false" title="White"><img src="https://svgs.scryfall.io/card-symbols/W.svg" alt="W"></button>
-          <button type="button" class="tog sym-tog" data-color="U" aria-pressed="false" title="Blue"><img src="https://svgs.scryfall.io/card-symbols/U.svg" alt="U"></button>
-          <button type="button" class="tog sym-tog" data-color="B" aria-pressed="false" title="Black"><img src="https://svgs.scryfall.io/card-symbols/B.svg" alt="B"></button>
-          <button type="button" class="tog sym-tog" data-color="R" aria-pressed="false" title="Red"><img src="https://svgs.scryfall.io/card-symbols/R.svg" alt="R"></button>
-          <button type="button" class="tog sym-tog" data-color="G" aria-pressed="false" title="Green"><img src="https://svgs.scryfall.io/card-symbols/G.svg" alt="G"></button>
-          <button type="button" class="tog sym-tog" data-colorless aria-pressed="false" title="Colorless"><img src="https://svgs.scryfall.io/card-symbols/C.svg" alt="C"></button>
-        </div>
-        <div class="qgroup" role="group" aria-label="Rarity">
-          <span class="qlabel">Rarity</span>
-          <button type="button" class="tog" data-rarity="common" aria-pressed="false">Common</button>
-          <button type="button" class="tog" data-rarity="uncommon" aria-pressed="false">Uncommon</button>
-          <button type="button" class="tog" data-rarity="rare" aria-pressed="false">Rare</button>
-          <button type="button" class="tog" data-rarity="mythic" aria-pressed="false">Mythic</button>
-        </div>
-        <div class="qgroup" role="group" aria-label="Set">
-          <span class="qlabel">Set</span>
-          <button type="button" class="tog" data-set="trk" aria-pressed="false">Main set</button>
-          <button type="button" class="tog" data-set="sds" aria-pressed="false">Stardates</button>
-        </div>
-        <div class="qgroup" role="group" aria-label="Show">
-          <span class="qlabel">Show</span>
-          <button type="button" class="tog" data-status="all" aria-pressed="true">All</button>
-          <button type="button" class="tog" data-status="untagged" aria-pressed="false">Untagged</button>
-          <button type="button" class="tog" data-status="tagged" aria-pressed="false">Tagged</button>
-        </div>
-      </div>
+      <div class="queue" id="queue" data-filters="review"></div>
 
       <div class="empty" id="review-empty" hidden></div>
 
@@ -274,6 +295,7 @@ dialog ul { margin: 10px 0 0; padding-left: 20px; }
 
         <div>
           <div class="navrow">
+            <button type="button" class="quiet" id="back" hidden>Back</button>
             <button type="button" class="quiet" id="prev">Previous</button>
             <span class="pos" id="pos"></span>
             <button type="button" class="quiet" id="next">Next</button>
@@ -296,6 +318,49 @@ dialog ul { margin: 10px 0 0; padding-left: 20px; }
           </div>
         </div>
       </div>
+    </section>
+
+    <!-- Browse -->
+    <section id="view-browse" aria-label="Browse cards" hidden>
+      <div class="queue" id="b-filters" data-filters="browse"></div>
+      <div class="queue" style="margin-top:14px">
+        <input type="text" class="searchbox" id="b-text" placeholder="Search names, rules text, and notes" autocomplete="off" aria-label="Search names, rules text, and notes">
+        <div class="qgroup">
+          <span class="qlabel">Tags</span>
+          <select id="b-tag-add" aria-label="Add a tag filter"></select>
+        </div>
+        <div class="qgroup" role="group" aria-label="Cards must have">
+          <button type="button" class="tog" data-match="any" aria-pressed="true">Any of these</button>
+          <button type="button" class="tog" data-match="all" aria-pressed="false">All of these</button>
+        </div>
+        <div class="qgroup">
+          <span class="qlabel">Sort</span>
+          <select id="b-sort" aria-label="Sort cards">
+            <option value="set">Set order</option>
+            <option value="cmc">Mana value</option>
+            <option value="name">Name</option>
+          </select>
+        </div>
+      </div>
+      <div class="filter-chips" id="b-tag-chips"></div>
+      <div class="bulk" id="b-bulk">
+        <span class="count" id="b-count"></span>
+        <button type="button" class="quiet" data-b="select-all">Select all shown</button>
+        <button type="button" class="quiet" data-b="clear">Clear selection</button>
+        <span class="divider" aria-hidden="true"></span>
+        <span id="b-selcount" class="qlabel"></span>
+        <select id="b-bulk-tag" aria-label="Tag to add or remove"></select>
+        <button type="button" class="go" data-b="add">Add to selected</button>
+        <button type="button" class="quiet" data-b="remove">Remove from selected</button>
+      </div>
+      <div class="grid" id="b-grid"></div>
+    </section>
+
+    <!-- Archetypes -->
+    <section id="view-arch" aria-label="Archetypes" hidden>
+      <div class="pairs" id="a-pairs" role="group" aria-label="Color pair"></div>
+      <div id="a-body"></div>
+      <p class="muted small" style="max-width:70ch;margin-top:36px">Columns come from tags whose names start with the color pair, like “UB Dilemma – Payoff”. Add or rename tags on the Tags screen and they show up here. The sections below the columns list cards in these two colors, plus colorless cards.</p>
     </section>
 
     <!-- Tags -->
@@ -417,7 +482,13 @@ document.addEventListener('error', e => {
 const state = {
   cards: [], byId: new Map(), fetchedAt: null, counts: {}, loading: false, loadError: null,
   user: null,
-  ui: { view: 'review', currentId: null, colors: [], colorless: false, rarities: [], sets: [], status: 'all', lastCat: null },
+  ui: {
+    view: 'review', currentId: null, colors: [], colorless: false, rarities: [], sets: [], status: 'all', lastCat: null,
+    browse: { colors: [], colorless: false, rarities: [], sets: [], status: 'all', tags: [], match: 'any', text: '', sort: 'set' },
+    arch: { pair: 'UB', open: [] },
+  },
+  returnTo: null,
+  selected: new Set(),
   face: 0,
   find: { q: '', hl: 0, items: [] },
 };
@@ -492,6 +563,8 @@ function slim(c, src) {
     colors: c.colors || [...new Set(rawFaces.flatMap(f => f.colors || []))],
     color_identity: c.color_identity || [],
     img: c.image_uris ? (c.image_uris.large || c.image_uris.normal) : (faces[0] && faces[0].img) || null,
+    thumb: c.image_uris ? (c.image_uris.normal || c.image_uris.large)
+      : (rawFaces[0] && rawFaces[0].image_uris && (rawFaces[0].image_uris.normal || rawFaces[0].image_uris.large)) || null,
     faces: faces.length > 1 ? faces : null,
     uri: c.scryfall_uri || `https://scryfall.com/search?q=${encodeURIComponent('!"' + c.name + '"')}`,
   };
@@ -797,19 +870,56 @@ function disconnect() {
 // ---------------------------------------------------------------------------
 // Review queue
 // ---------------------------------------------------------------------------
-function matches(card, ignoreStatus = false) {
-  const u = state.ui;
-  if (u.colors.length || u.colorless) {
+function matchesFilters(card, f, ignoreStatus = false) {
+  if (f.colors.length || f.colorless) {
     const ci = card.color_identity;
-    if (!ci.length) { if (!u.colorless) return false; }
-    else if (!u.colors.length || !ci.every(c => u.colors.includes(c))) return false;
+    if (!ci.length) { if (!f.colorless) return false; }
+    else if (!f.colors.length || !ci.every(c => f.colors.includes(c))) return false;
   }
-  if (u.rarities.length && !u.rarities.includes(card.rarity)) return false;
-  if (u.sets && u.sets.length && !u.sets.includes(card.src || 'trk')) return false;
+  if (f.rarities.length && !f.rarities.includes(card.rarity)) return false;
+  if (f.sets && f.sets.length && !f.sets.includes(card.src || 'trk')) return false;
   if (!ignoreStatus) {
-    if (u.status === 'untagged' && isTagged(card.id)) return false;
-    if (u.status === 'tagged' && !isTagged(card.id)) return false;
+    if (f.status === 'untagged' && isTagged(card.id)) return false;
+    if (f.status === 'tagged' && !isTagged(card.id)) return false;
   }
+  return true;
+}
+const matches = (card, ignoreStatus = false) => matchesFilters(card, state.ui, ignoreStatus);
+
+// The color, rarity, set, and tagged/untagged buttons used on Review and Browse.
+function filterBarHTML() {
+  const symBtn = (v, title, attr) => `<button type="button" class="tog sym-tog" data-f="${attr}" data-v="${v}" aria-pressed="false" title="${title}"><img src="https://svgs.scryfall.io/card-symbols/${v}.svg" alt="${v}"></button>`;
+  const tog = (f, v, label) => `<button type="button" class="tog" data-f="${f}" data-v="${v}" aria-pressed="false">${label}</button>`;
+  return `
+    <div class="qgroup" role="group" aria-label="Colors"><span class="qlabel">Colors</span>
+      ${[['W', 'White'], ['U', 'Blue'], ['B', 'Black'], ['R', 'Red'], ['G', 'Green']].map(([v, t]) => symBtn(v, t, 'color')).join('')}
+      ${symBtn('C', 'Colorless', 'colorless')}</div>
+    <div class="qgroup" role="group" aria-label="Rarity"><span class="qlabel">Rarity</span>
+      ${tog('rarity', 'common', 'Common')}${tog('rarity', 'uncommon', 'Uncommon')}${tog('rarity', 'rare', 'Rare')}${tog('rarity', 'mythic', 'Mythic')}</div>
+    <div class="qgroup" role="group" aria-label="Set"><span class="qlabel">Set</span>
+      ${tog('set', 'trk', 'Main set')}${tog('set', 'sds', 'Stardates')}</div>
+    <div class="qgroup" role="group" aria-label="Show"><span class="qlabel">Show</span>
+      ${tog('status', 'all', 'All')}${tog('status', 'untagged', 'Untagged')}${tog('status', 'tagged', 'Tagged')}</div>`;
+}
+function syncFilterBar(el, f) {
+  $$('[data-f]', el).forEach(b => {
+    const k = b.dataset.f, v = b.dataset.v;
+    const on = k === 'color' ? f.colors.includes(v) : k === 'colorless' ? f.colorless
+      : k === 'rarity' ? f.rarities.includes(v) : k === 'set' ? (f.sets || []).includes(v) : f.status === v;
+    b.setAttribute('aria-pressed', on);
+  });
+}
+// Returns true if a filter changed.
+function applyFilterClick(btn, f) {
+  if (!btn || !btn.dataset.f) return false;
+  const k = btn.dataset.f, v = btn.dataset.v;
+  const flip = (arr, x) => arr.includes(x) ? arr.filter(y => y !== x) : [...arr, x];
+  if (k === 'color') f.colors = flip(f.colors, v);
+  else if (k === 'colorless') f.colorless = !f.colorless;
+  else if (k === 'rarity') f.rarities = flip(f.rarities, v);
+  else if (k === 'set') f.sets = flip(f.sets || [], v);
+  else if (k === 'status') f.status = v;
+  else return false;
   return true;
 }
 const queue = () => state.cards.filter(c => matches(c));
@@ -838,6 +948,193 @@ function goTo(id) {
   renderReview();
   const q = queue(); const i = q.findIndex(c => c.id === id);
   const nxt = q[i + 1]; if (nxt && nxt.img) { const im = new Image(); im.src = nxt.img; }
+}
+
+function openInReview(id) {
+  state.returnTo = state.ui.view;
+  showView('review', { keepReturn: true });
+  goTo(id);
+}
+
+// ---------------------------------------------------------------------------
+// Browse and Archetypes
+// ---------------------------------------------------------------------------
+const PAIRS = ['WU', 'UB', 'BR', 'RG', 'GW', 'WB', 'UR', 'BG', 'RW', 'GU'];
+const VIEW_NAME = { browse: 'Browse', arch: 'Archetypes', tags: 'Tags', data: 'Data' };
+const ARCH_PREFIX = /^([WUBRG])([WUBRG])\s/i;
+function pairOf(tag) {
+  const m = tag.name.match(ARCH_PREFIX);
+  if (!m || m[1].toUpperCase() === m[2].toUpperCase()) return null;
+  return (m[1] + m[2]).toUpperCase();
+}
+const samePair = (a, b) => a === b || a === b[1] + b[0];
+function pairTags(pair) { return state.user.tags.filter(t => { const p = pairOf(t); return p && samePair(p, pair); }); }
+function pairTheme(pair) {
+  const t = pairTags(pair)[0];
+  if (!t) return '';
+  const rest = t.name.slice(3).trim();
+  const cut = rest.search(/\s[–-]\s(?!.*\s[–-]\s)/);
+  return cut > 0 ? rest.slice(0, cut) : rest;
+}
+const inColors = (card, letters) => card.color_identity.every(c => letters.includes(c));
+
+function searchText(card) {
+  const r = state.user.cards[card.id];
+  const faces = card.faces ? card.faces.map(f => `${f.name} ${f.type_line} ${f.oracle_text}`).join(' ') : '';
+  return `${card.name} ${card.alt} ${card.type_line} ${card.oracle_text} ${faces} ${r ? r.note : ''}`.toLowerCase();
+}
+
+function browseList() {
+  const f = state.ui.browse;
+  const tokens = f.text.toLowerCase().split(/\s+/).filter(Boolean);
+  const want = f.tags.filter(id => state.user.tags.some(t => t.id === id));
+  let list = state.cards.filter(c => {
+    if (!matchesFilters(c, f)) return false;
+    if (want.length) {
+      const have = new Set(cardTags(c.id));
+      if (f.match === 'all' ? !want.every(t => have.has(t)) : !want.some(t => have.has(t))) return false;
+    }
+    if (tokens.length) { const hay = searchText(c); if (!tokens.every(t => hay.includes(t))) return false; }
+    return true;
+  });
+  if (f.sort === 'cmc') list = list.map((c, i) => [c, i]).sort((a, b) => (a[0].cmc - b[0].cmc) || (a[1] - b[1])).map(x => x[0]);
+  if (f.sort === 'name') list = [...list].sort((a, b) => a.name.localeCompare(b.name));
+  return list;
+}
+
+function tileHTML(card, selectable) {
+  const tagById = new Map(state.user.tags.map(t => [t.id, t]));
+  const catColor = new Map(state.user.categories.map(c => [c.id, hex(c.color)]));
+  const tags = cardTags(card.id).map(id => tagById.get(id)).filter(Boolean);
+  const shown = tags.slice(0, 4);
+  const sel = selectable && state.selected.has(card.id);
+  const src = card.thumb || card.img;
+  return `<div class="tile${sel ? ' selected' : ''}" data-id="${card.id}">
+    <button type="button" class="tile-open" data-open="${card.id}" aria-label="Open ${esc(card.name)} in Review">${src ? `<img loading="lazy" src="${esc(src)}" alt="">` : ''}</button>
+    ${selectable ? `<label class="tile-check" title="Select"><input type="checkbox" data-select="${card.id}"${sel ? ' checked' : ''} aria-label="Select ${esc(card.name)}"></label>` : ''}
+    <div class="tile-name">${esc(card.name)}</div>
+    ${shown.length ? `<div class="tile-tags">${shown.map(t => `<span style="--cat:${catColor.get(t.categoryId) || hex('orange')}">${esc(t.name)}</span>`).join('')}${tags.length > 4 ? `<span style="--cat:var(--surface);color:var(--fg)">+${tags.length - 4}</span>` : ''}</div>` : ''}
+  </div>`;
+}
+
+function tagOptionsHTML(placeholder) {
+  return `<option value="">${esc(placeholder)}</option>` + state.user.categories.map(cat => {
+    const tags = state.user.tags.filter(t => t.categoryId === cat.id);
+    return tags.length ? `<optgroup label="${esc(cat.name)}">${tags.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('')}</optgroup>` : '';
+  }).join('');
+}
+
+function renderBrowse() {
+  const f = state.ui.browse;
+  f.tags = f.tags.filter(id => state.user.tags.some(t => t.id === id));
+  syncFilterBar($('#b-filters'), f);
+  const text = $('#b-text'); if (document.activeElement !== text) text.value = f.text;
+  $('#b-sort').value = f.sort;
+  $$('[data-match]').forEach(b => b.setAttribute('aria-pressed', f.match === b.dataset.match));
+  $('#b-tag-add').innerHTML = tagOptionsHTML('Add a tag filter…');
+  const bulkSel = $('#b-bulk-tag'); const keep = bulkSel.value;
+  bulkSel.innerHTML = tagOptionsHTML('Choose a tag…') + '<option value="__new">New tag…</option>';
+  if ([...bulkSel.options].some(o => o.value === keep)) bulkSel.value = keep;
+
+  const tagById = new Map(state.user.tags.map(t => [t.id, t]));
+  const catColor = new Map(state.user.categories.map(c => [c.id, hex(c.color)]));
+  $('#b-tag-chips').innerHTML = f.tags.map(id => {
+    const t = tagById.get(id);
+    return `<button type="button" class="chip" data-unfilter="${id}" style="--cat:${catColor.get(t.categoryId)}" aria-label="Stop filtering by ${esc(t.name)}">${esc(t.name)} ×</button>`;
+  }).join('');
+
+  const list = browseList();
+  const shownIds = new Set(list.map(c => c.id));
+  for (const id of [...state.selected]) if (!shownIds.has(id)) state.selected.delete(id);
+  $('#b-count').textContent = plural(list.length, 'card');
+  renderBulkState();
+  $('#b-grid').innerHTML = list.length
+    ? list.map(c => tileHTML(c, true)).join('')
+    : `<p class="empty-note">${state.cards.length ? 'No cards match these filters.' : 'No cards loaded yet.'}</p>`;
+}
+
+function renderBulkState() {
+  const n = state.selected.size;
+  $('#b-selcount').textContent = n ? `${n} selected` : 'Nothing selected';
+  const tagChosen = !!$('#b-bulk-tag').value;
+  $('[data-b="add"]').disabled = !n || !tagChosen;
+  $('[data-b="remove"]').disabled = !n || !tagChosen || $('#b-bulk-tag').value === '__new';
+  $('[data-b="clear"]').disabled = !n;
+}
+
+function bulkTag(add) {
+  const sel = $('#b-bulk-tag');
+  let tagId = sel.value;
+  if (!tagId || !state.selected.size) return;
+  if (tagId === '__new') {
+    const name = (prompt('Name for the new tag:') || '').trim();
+    if (!name) return;
+    const cat = state.user.categories.find(c => c.id === state.ui.lastCat) || state.user.categories[0];
+    const t = createTag(name, cat ? cat.id : null);
+    tagId = t.id;
+  }
+  const tag = state.user.tags.find(t => t.id === tagId);
+  let changed = 0;
+  for (const id of state.selected) {
+    const card = state.byId.get(id); if (!card) continue;
+    const r = record(card);
+    const has = r.tags.includes(tagId);
+    if (add && !has) { r.tags.push(tagId); changed++; }
+    if (!add && has) { r.tags = r.tags.filter(t => t !== tagId); changed++; }
+    tidy(id);
+  }
+  saveUser();
+  renderBrowse();
+  $('#b-bulk-tag').value = tagId; renderBulkState();
+  toast(add ? `Added “${tag.name}” to ${plural(changed, 'card')}.` : `Removed “${tag.name}” from ${plural(changed, 'card')}.`);
+}
+
+function renderArch() {
+  const a = state.ui.arch;
+  if (!PAIRS.includes(a.pair)) a.pair = 'UB';
+  $('#a-pairs').innerHTML = PAIRS.map(p => {
+    const theme = pairTheme(p);
+    return `<button type="button" class="tog pair" data-pair="${p}" aria-pressed="${p === a.pair}">
+      <img src="https://svgs.scryfall.io/card-symbols/${p[0]}.svg" alt="${p[0]}"><img src="https://svgs.scryfall.io/card-symbols/${p[1]}.svg" alt="${p[1]}">
+      <span>${esc(theme || p)}</span></button>`;
+  }).join('');
+
+  const pair = a.pair;
+  const tags = pairTags(pair);
+  const catColor = new Map(state.user.categories.map(c => [c.id, hex(c.color)]));
+  let html = '';
+  if (!tags.length) {
+    html += `<p class="empty-note">No tags start with “${pair}” yet. Add one on the Tags screen, for example “${pair} Theme – Payoff”.</p>`;
+  } else {
+    html += '<div class="pair-cols">' + tags.map(t => {
+      const cards = state.cards.filter(c => cardTags(c.id).includes(t.id));
+      return `<div class="pair-col" style="--cat:${catColor.get(t.categoryId)}">
+        <h3>${esc(t.name.slice(3).trim())} <span class="n">${cards.length}</span></h3>
+        ${cards.length ? `<div class="grid">${cards.map(c => tileHTML(c, false)).join('')}</div>`
+          : '<p class="muted small">No cards tagged yet.</p>'}
+      </div>`;
+    }).join('') + '</div>';
+  }
+
+  // Everything else that's castable in these two colors.
+  const letters = pair.split('');
+  const pool = state.cards.filter(c => inColors(c, letters));
+  const others = state.user.tags.filter(t => !pairOf(t));
+  const sections = [];
+  for (const t of others) {
+    const cards = pool.filter(c => cardTags(c.id).includes(t.id));
+    if (cards.length) sections.push({ key: t.id, title: t.name, color: catColor.get(t.categoryId), cards });
+  }
+  const untagged = pool.filter(c => !isTagged(c.id));
+  if (untagged.length) sections.push({ key: 'untagged', title: 'Not tagged yet', color: 'var(--line)', cards: untagged });
+  if (sections.length) {
+    html += `<div class="also"><h3 class="section">Also in these colors</h3>` + sections.map(sec => `
+      <details data-key="${sec.key}" style="--cat:${sec.color}"${a.open.includes(sec.key) ? ' open' : ''}>
+        <summary>${esc(sec.title)} <span class="n">${sec.cards.length}</span></summary>
+        <div class="grid">${sec.cards.map(c => tileHTML(c, false)).join('')}</div>
+      </details>`).join('') + '</div>';
+  }
+  $('#a-body').innerHTML = html;
 }
 
 // ---------------------------------------------------------------------------
@@ -916,12 +1213,10 @@ function showEmpty(html) {
 }
 
 function renderQueueControls() {
-  const u = state.ui;
-  $$('[data-color]').forEach(b => b.setAttribute('aria-pressed', u.colors.includes(b.dataset.color)));
-  $('[data-colorless]').setAttribute('aria-pressed', u.colorless);
-  $$('[data-rarity]').forEach(b => b.setAttribute('aria-pressed', u.rarities.includes(b.dataset.rarity)));
-  $$('[data-set]').forEach(b => b.setAttribute('aria-pressed', (u.sets || []).includes(b.dataset.set)));
-  $$('[data-status]').forEach(b => b.setAttribute('aria-pressed', u.status === b.dataset.status));
+  syncFilterBar($('#queue'), state.ui);
+  const back = $('#back');
+  back.hidden = !state.returnTo;
+  if (state.returnTo) back.textContent = `Back to ${VIEW_NAME[state.returnTo] || 'previous screen'}`;
 }
 
 function renderPos() {
@@ -1108,23 +1403,27 @@ function renderData() {
 
 function renderAll() {
   renderStatus();
-  renderReview();
-  renderTags();
-  renderData();
+  renderView(state.ui.view);
+}
+function renderView(view) {
+  if (view === 'review') renderReview();
+  if (view === 'browse') renderBrowse();
+  if (view === 'arch') renderArch();
+  if (view === 'tags') renderTags();
+  if (view === 'data') renderData();
 }
 
-function showView(view) {
-  if (!['review', 'tags', 'data'].includes(view)) view = 'review';
+const VIEWS = ['review', 'browse', 'arch', 'tags', 'data'];
+function showView(view, { keepReturn = false } = {}) {
+  if (!VIEWS.includes(view)) view = 'review';
+  if (!keepReturn) state.returnTo = null;
   state.ui.view = view; saveUI();
   $$('.side [data-view]').forEach(b => {
     if (b.dataset.view === view) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   });
-  $('#view-review').hidden = view !== 'review';
-  $('#view-tags').hidden = view !== 'tags';
-  $('#view-data').hidden = view !== 'data';
-  if (view === 'review') renderReview();
-  if (view === 'tags') renderTags();
-  if (view === 'data') renderData();
+  VIEWS.forEach(v => { $(`#view-${v}`).hidden = v !== view; });
+  renderView(view);
+  window.scrollTo(0, 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -1186,19 +1485,71 @@ function bind() {
     else connect(token);
   });
 
-  // Queue filters
+  // Review filters
+  $('#queue').innerHTML = filterBarHTML();
   $('#queue').addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b) return;
-    const u = state.ui;
-    const flip = (arr, k) => arr.includes(k) ? arr.filter(x => x !== k) : [...arr, k];
-    if (b.dataset.color) u.colors = flip(u.colors, b.dataset.color);
-    else if (b.hasAttribute('data-colorless')) u.colorless = !u.colorless;
-    else if (b.dataset.rarity) u.rarities = flip(u.rarities, b.dataset.rarity);
-    else if (b.dataset.set) u.sets = flip(u.sets || [], b.dataset.set);
-    else if (b.dataset.status) u.status = b.dataset.status;
-    else return;
+    if (!applyFilterClick(e.target.closest('[data-f]'), state.ui)) return;
     saveUI(); renderQueueControls(); renderPos();
   });
+
+  // Browse
+  $('#b-filters').innerHTML = filterBarHTML();
+  const bf = () => state.ui.browse;
+  $('#b-filters').addEventListener('click', e => {
+    if (!applyFilterClick(e.target.closest('[data-f]'), bf())) return;
+    saveUI(); renderBrowse();
+  });
+  let textTimer = null;
+  $('#b-text').addEventListener('input', e => {
+    bf().text = e.target.value;
+    clearTimeout(textTimer); textTimer = setTimeout(() => { saveUI(); renderBrowse(); }, 180);
+  });
+  $('#b-tag-add').addEventListener('change', e => {
+    const id = e.target.value; if (!id) return;
+    if (!bf().tags.includes(id)) bf().tags.push(id);
+    saveUI(); renderBrowse();
+  });
+  $('#b-tag-chips').addEventListener('click', e => {
+    const b = e.target.closest('[data-unfilter]'); if (!b) return;
+    bf().tags = bf().tags.filter(id => id !== b.dataset.unfilter);
+    saveUI(); renderBrowse();
+  });
+  $$('[data-match]').forEach(b => b.addEventListener('click', () => { bf().match = b.dataset.match; saveUI(); renderBrowse(); }));
+  $('#b-sort').addEventListener('change', e => { bf().sort = e.target.value; saveUI(); renderBrowse(); });
+  $('#b-grid').addEventListener('change', e => {
+    const box = e.target.closest('[data-select]'); if (!box) return;
+    if (box.checked) state.selected.add(box.dataset.select); else state.selected.delete(box.dataset.select);
+    box.closest('.tile').classList.toggle('selected', box.checked);
+    renderBulkState();
+  });
+  $('#b-bulk').addEventListener('click', e => {
+    const b = e.target.closest('[data-b]'); if (!b || b.disabled) return;
+    const act = b.dataset.b;
+    if (act === 'select-all') { browseList().forEach(c => state.selected.add(c.id)); renderBrowse(); }
+    if (act === 'clear') { state.selected.clear(); renderBrowse(); }
+    if (act === 'add') bulkTag(true);
+    if (act === 'remove') bulkTag(false);
+  });
+  $('#b-bulk-tag').addEventListener('change', renderBulkState);
+
+  // Archetypes
+  $('#a-pairs').addEventListener('click', e => {
+    const b = e.target.closest('[data-pair]'); if (!b) return;
+    state.ui.arch.pair = b.dataset.pair; saveUI(); renderArch();
+  });
+  $('#a-body').addEventListener('toggle', e => {
+    const d = e.target; if (!d.matches || !d.matches('details[data-key]')) return;
+    const open = new Set(state.ui.arch.open);
+    if (d.open) open.add(d.dataset.key); else open.delete(d.dataset.key);
+    state.ui.arch.open = [...open]; saveUI();
+  }, true);
+
+  // Opening a card from Browse or Archetypes
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-open]'); if (!b) return;
+    openInReview(b.dataset.open);
+  });
+  $('#back').addEventListener('click', () => { const v = state.returnTo; state.returnTo = null; showView(v || 'review'); });
 
   // Card navigation
   $('#prev').addEventListener('click', () => step(-1));
@@ -1252,6 +1603,7 @@ function bind() {
 
   // Keyboard shortcuts on the Review screen
   document.addEventListener('keydown', e => {
+    if (state.ui.view === 'browse' && e.key === '/' && !e.target.closest('input, textarea, select')) { e.preventDefault(); $('#b-text').focus(); return; }
     if (state.ui.view !== 'review' || e.ctrlKey || e.metaKey || e.altKey) return;
     if ($('#conflict').open) return;
     if (e.target.closest('input, textarea, select')) return;
@@ -1367,7 +1719,13 @@ function init() {
   const u = readJSON(KEYS.user);
   state.user = validUser(u) ? u : seedUser();
   if (!validUser(u)) writeJSON(KEYS.user, state.user);
-  const ui = readJSON(KEYS.ui); if (ui) Object.assign(state.ui, ui);
+  const defaults = JSON.parse(JSON.stringify(state.ui));
+  const ui = readJSON(KEYS.ui);
+  if (ui) {
+    Object.assign(state.ui, ui);
+    state.ui.browse = Object.assign({}, defaults.browse, ui.browse || {});
+    state.ui.arch = Object.assign({}, defaults.arch, ui.arch || {});
+  }
   if (!Array.isArray(state.ui.sets)) state.ui.sets = [];
 
   const cached = readJSON(KEYS.cards);
