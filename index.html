@@ -13,16 +13,16 @@
   --orange: #ff9900; --gold: #ffcc66; --peach: #ffbb99; --lilac: #cc99cc;
   --violet: #9988dd; --sky: #99ccff; --rose: #dd6666; --tan: #cc9966;
   --bg: #fbfbfc; --surface: #eef0f3; --fg: #141414; --muted: #5b5f67;
-  --line: #c9ced6; --heading: #a55800; --focus: #0b5cd6;
+  --line: #c9ced6; --heading: #a55800; --focus: #0b5cd6; --danger: #b3261e;
   --ui: "Antonio", "Arial Narrow", "Roboto Condensed", sans-serif;
   --serif: "Source Serif 4", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-  --side-w: 150px; --top-h: 78px; --bar-h: 28px; --gap: 5px;
+  --side-w: 150px; --top-h: 88px; --bar-h: 28px; --gap: 5px;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #000; --surface: #131416; --fg: #ece7df; --muted: #a39e96;
-    --line: #3b3a38; --heading: #ff9900; --focus: #99ccff;
+    --line: #3b3a38; --heading: #ff9900; --focus: #99ccff; --danger: #ff8a80;
     color-scheme: dark;
   }
 }
@@ -52,9 +52,12 @@ body { background: var(--bg); color: var(--fg); font: 17px/1.5 var(--serif); }
 }
 .bar .cap { width: 44px; background: var(--orange); border-radius: 0 14px 14px 0; }
 .status {
-  position: absolute; right: 0; top: calc(var(--bar-h) + 12px);
+  position: absolute; right: 0; top: calc(var(--bar-h) + 10px);
+  display: flex; flex-direction: column; align-items: flex-end; gap: 5px;
   font: 400 18px/1 var(--ui); color: var(--muted);
 }
+#sync-line { font-size: 15px; }
+#sync-line.warn { color: var(--danger); }
 .side { grid-column: 1; grid-row: 2; display: flex; flex-direction: column; gap: var(--gap); padding-top: var(--gap); }
 .side button {
   all: unset; box-sizing: border-box; cursor: pointer; height: 58px; padding: 0 12px 7px;
@@ -74,13 +77,13 @@ main { grid-column: 2; grid-row: 2; padding: 14px 0 48px 30px; min-width: 0; }
 button, .btn {
   font: 600 16px/1.2 var(--ui); letter-spacing: .02em; border: 0; border-radius: 999px;
   padding: 7px 16px; background: var(--peach); color: #000; cursor: pointer;
+  text-decoration: none; display: inline-block;
 }
 button:hover, .btn:hover { filter: brightness(1.07); }
-button.quiet { background: transparent; color: var(--fg); box-shadow: inset 0 0 0 1.5px var(--line); }
+button.quiet, .btn.quiet { background: transparent; color: var(--fg); box-shadow: inset 0 0 0 1.5px var(--line); }
 button.go { background: var(--orange); }
-button.danger { background: var(--rose); }
 button:disabled { opacity: .45; cursor: default; filter: none; }
-input[type="text"], select, textarea {
+input[type="text"], input[type="password"], select, textarea {
   font: 17px/1.35 var(--serif); color: var(--fg); background: var(--bg);
   border: 1.5px solid var(--line); border-radius: 10px; padding: 6px 10px;
 }
@@ -89,6 +92,7 @@ h2.view-title { font: 600 34px/1.1 var(--ui); color: var(--heading); margin: 6px
 h3.section { font: 600 24px/1.2 var(--ui); color: var(--heading); margin: 30px 0 8px; }
 .muted { color: var(--muted); }
 .small { font-size: 15px; }
+.warn-text { color: var(--danger); }
 kbd {
   font: 600 14px/1 var(--ui); padding: 2px 6px; border-radius: 5px;
   box-shadow: inset 0 0 0 1.5px var(--line); color: var(--fg);
@@ -105,7 +109,6 @@ kbd {
 .tog[aria-pressed="true"] { background: var(--orange); color: #000; box-shadow: none; }
 .tog.sym-tog { padding: 4px; line-height: 0; }
 .tog.sym-tog img { width: 22px; height: 22px; }
-.tog.sym-tog[aria-pressed="true"] { background: var(--orange); }
 
 .review {
   display: grid; grid-template-columns: minmax(260px, 400px) minmax(0, 1fr);
@@ -131,6 +134,7 @@ img.sym { width: 1em; height: 1em; vertical-align: -0.14em; margin: 0 1px; }
 .headline { margin: 22px 0 4px; display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
 .headline h2 { font: 600 30px/1.15 var(--serif); margin: 0; }
 .headline .cost img.sym { width: 22px; height: 22px; vertical-align: -3px; }
+.altname { font: italic 400 17px/1.3 var(--serif); color: var(--muted); margin: 0 0 4px; }
 .typeline { font: 400 19px/1.3 var(--ui); color: var(--muted); display: flex; gap: 18px; flex-wrap: wrap; }
 
 .tagger { margin-top: 22px; }
@@ -176,13 +180,23 @@ img.sym { width: 1em; height: 1em; vertical-align: -0.14em; margin: 0 1px; }
 
 /* ---------- data ---------- */
 .data-block { max-width: 70ch; }
-.data-block .row { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+.data-block .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 12px 0; }
+.data-block input[type="password"] { width: 340px; max-width: 100%; }
+
+/* ---------- conflict dialog ---------- */
+dialog {
+  max-width: 600px; border: 0; border-left: 14px solid var(--orange); border-radius: 0 18px 18px 0;
+  background: var(--bg); color: var(--fg); padding: 22px 28px 18px;
+}
+dialog::backdrop { background: rgba(0, 0, 0, .6); }
+dialog .row { display: flex; gap: 10px; flex-wrap: wrap; margin: 18px 0 10px; }
+dialog ul { margin: 10px 0 0; padding-left: 20px; }
 
 /* ---------- toast ---------- */
 #toast {
-  position: fixed; right: 24px; bottom: 24px; max-width: 420px; z-index: 10;
+  position: fixed; right: 24px; bottom: 24px; max-width: 440px; z-index: 10;
   background: var(--gold); color: #000; font: 600 16px/1.35 var(--ui);
-  padding: 10px 18px; border-radius: 999px; box-shadow: 0 0 0 4px var(--bg);
+  padding: 10px 18px; border-radius: 22px; box-shadow: 0 0 0 4px var(--bg);
 }
 #toast.bad { background: var(--rose); }
 
@@ -203,7 +217,7 @@ img.sym { width: 1em; height: 1em; vertical-align: -0.14em; margin: 0 1px; }
   <div class="elbow" aria-hidden="true"></div>
   <header class="top">
     <div class="bar"><span class="fill"></span><span class="title">TRK Tagger</span><span class="cap"></span></div>
-    <div class="status" id="status" aria-live="polite"></div>
+    <div class="status" aria-live="polite"><div id="status"></div><div id="sync-line"></div></div>
   </header>
   <nav class="side" aria-label="Screens">
     <button type="button" data-view="review">Review</button>
@@ -232,6 +246,11 @@ img.sym { width: 1em; height: 1em; vertical-align: -0.14em; margin: 0 1px; }
           <button type="button" class="tog" data-rarity="uncommon" aria-pressed="false">Uncommon</button>
           <button type="button" class="tog" data-rarity="rare" aria-pressed="false">Rare</button>
           <button type="button" class="tog" data-rarity="mythic" aria-pressed="false">Mythic</button>
+        </div>
+        <div class="qgroup" role="group" aria-label="Set">
+          <span class="qlabel">Set</span>
+          <button type="button" class="tog" data-set="trk" aria-pressed="false">Main set</button>
+          <button type="button" class="tog" data-set="sds" aria-pressed="false">Stardates</button>
         </div>
         <div class="qgroup" role="group" aria-label="Show">
           <span class="qlabel">Show</span>
@@ -262,6 +281,7 @@ img.sym { width: 1em; height: 1em; vertical-align: -0.14em; margin: 0 1px; }
             <button type="button" class="go" id="next-untagged">Next untagged</button>
           </div>
           <div class="headline"><h2 id="card-name"></h2><span class="cost" id="card-cost"></span></div>
+          <p class="altname" id="card-alt" hidden></p>
           <div class="typeline" id="card-type"></div>
 
           <div class="tagger" id="tagger">
@@ -292,6 +312,7 @@ img.sym { width: 1em; height: 1em; vertical-align: -0.14em; margin: 0 1px; }
     <!-- Data -->
     <section id="view-data" aria-label="Data" hidden>
       <h2 class="view-title">Data</h2>
+      <div class="data-block" id="data-sync"></div>
       <div class="data-block" id="data-cards"></div>
       <div class="data-block" id="data-user"></div>
       <input type="file" id="import-file" accept=".json,application/json" hidden>
@@ -300,6 +321,19 @@ img.sym { width: 1em; height: 1em; vertical-align: -0.14em; margin: 0 1px; }
     <p class="credit">Card data and images from <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>. Card images and text © Wizards of the Coast.</p>
   </main>
 </div>
+
+<dialog id="conflict" aria-labelledby="conflict-title">
+  <h2 class="view-title" id="conflict-title"></h2>
+  <p id="conflict-body" style="margin:0"></p>
+  <ul id="conflict-facts"></ul>
+  <div class="row">
+    <button type="button" class="go" data-choice="combine">Combine both</button>
+    <button type="button" data-choice="remote">Keep the gist’s version</button>
+    <button type="button" class="quiet" data-choice="local">Keep this computer’s version</button>
+  </div>
+  <p class="muted small" style="margin:0">Combining keeps every tag and note from both versions. Tags with the same name count as one tag.</p>
+</dialog>
+
 <div id="toast" role="status" hidden></div>
 <noscript><p style="padding:24px">TRK Tagger needs JavaScript turned on.</p></noscript>
 
@@ -310,8 +344,16 @@ img.sym { width: 1em; height: 1em; vertical-align: -0.14em; margin: 0 1px; }
 // ---------------------------------------------------------------------------
 // Settings
 // ---------------------------------------------------------------------------
-const SET_QUERY = 'e:trk cn>=1 cn<=306 -t:basic';
-const KEYS = { cards: 'trkTagger.cards.v1', user: 'trkTagger.user.v1', ui: 'trkTagger.ui.v1' };
+// Which cards to load from Scryfall. Changing this list means bumping CARD_LIST_VERSION
+// so every browser reloads its saved card list.
+const SOURCES = [
+  { key: 'trk', label: 'Star Trek', q: 'e:trk cn>=1 cn<=306 -t:basic', unique: 'prints' },
+  { key: 'sds', label: 'Stardates', q: 'e:sds', unique: 'cards' },
+];
+const CARD_LIST_VERSION = 2;
+const REFRESH_AFTER_MS = 24 * 60 * 60 * 1000; // Scryfall asks apps not to re-download more than daily.
+const GIST_FILE = 'trk-tagger.json';
+const KEYS = { cards: 'trkTagger.cards.v1', user: 'trkTagger.user.v1', ui: 'trkTagger.ui.v1', sync: 'trkTagger.sync.v1' };
 const PALETTE = [
   ['orange', 'Orange', '#ff9900'], ['gold', 'Gold', '#ffcc66'], ['peach', 'Peach', '#ffbb99'],
   ['lilac', 'Lilac', '#cc99cc'], ['violet', 'Violet', '#9988dd'], ['sky', 'Sky', '#99ccff'],
@@ -329,7 +371,9 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const uid = p => `${p}_${Math.random().toString(36).slice(2, 9)}${Date.now().toString(36).slice(-3)}`;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const hex = name => HEX[name] || HEX.orange;
+const nowISO = () => new Date().toISOString();
 const fmtDate = iso => iso ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'never';
+const fmtTime = iso => iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '';
 const plural = (n, one, many) => `${n} ${n === 1 ? one : (many || one + 's')}`;
 
 function readJSON(key) {
@@ -344,7 +388,7 @@ let toastTimer = null;
 function toast(msg, bad = false) {
   const t = $('#toast');
   t.textContent = msg; t.classList.toggle('bad', bad); t.hidden = false;
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, bad ? 6000 : 2600);
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, bad ? 7000 : 2800);
 }
 
 // Mana and tap symbols, drawn with Scryfall's symbol images. Input must already be escaped.
@@ -371,9 +415,9 @@ document.addEventListener('error', e => {
 // State
 // ---------------------------------------------------------------------------
 const state = {
-  cards: [], byId: new Map(), fetchedAt: null, loading: false, loadError: null,
+  cards: [], byId: new Map(), fetchedAt: null, counts: {}, loading: false, loadError: null,
   user: null,
-  ui: { view: 'review', currentId: null, colors: [], colorless: false, rarities: [], status: 'all', lastCat: null },
+  ui: { view: 'review', currentId: null, colors: [], colorless: false, rarities: [], sets: [], status: 'all', lastCat: null },
   face: 0,
   find: { q: '', hl: 0, items: [] },
 };
@@ -396,13 +440,18 @@ function seedUser() {
   });
   roles.forEach(name => tags.push({ id: uid('tag'), name, categoryId: 'cat_role' }));
   study.forEach(name => tags.push({ id: uid('tag'), name, categoryId: 'cat_study' }));
-  return { app: 'trk-tagger', schema: 1, categories, tags, cards: {}, updatedAt: new Date().toISOString() };
+  return { app: 'trk-tagger', schema: 1, categories, tags, cards: {}, updatedAt: nowISO(), rev: uid('rev') };
 }
 const validUser = u => !!u && Array.isArray(u.categories) && Array.isArray(u.tags) && !!u.cards && typeof u.cards === 'object';
+const hasCardData = u => Object.keys(u.cards).length > 0;
+const revOf = u => (u && u.rev) || 'none';
 
+// Every change to tags, categories, or notes goes through here.
 function saveUser() {
-  state.user.updatedAt = new Date().toISOString();
+  state.user.updatedAt = nowISO();
+  state.user.rev = uid('rev');
   writeJSON(KEYS.user, state.user);
+  if (connected()) { sync.dirty = true; saveSync(); scheduleSync(); }
   renderStatus();
 }
 const saveUI = () => writeJSON(KEYS.ui, state.ui);
@@ -426,15 +475,17 @@ function tagCounts() {
 // ---------------------------------------------------------------------------
 // Scryfall
 // ---------------------------------------------------------------------------
-function slim(c) {
+function slim(c, src) {
   const rawFaces = c.card_faces || [];
   const faces = rawFaces.map(f => ({
     name: f.name, mana_cost: f.mana_cost || '', type_line: f.type_line || '', oracle_text: f.oracle_text || '',
     power: f.power, toughness: f.toughness, loyalty: f.loyalty, defense: f.defense,
     img: f.image_uris ? (f.image_uris.large || f.image_uris.normal) : null,
   }));
+  const alt = c.flavor_name || c.printed_name || (rawFaces[0] && (rawFaces[0].flavor_name || rawFaces[0].printed_name)) || '';
   return {
-    id: c.id, name: c.name, cn: c.collector_number, rarity: c.rarity,
+    id: c.id, src, name: c.name, alt: alt && alt !== c.name ? alt : '',
+    cn: c.collector_number, rarity: c.rarity,
     mana_cost: c.mana_cost ?? faces.map(f => f.mana_cost).filter(Boolean).join(' // '),
     cmc: c.cmc ?? 0, type_line: c.type_line || '', oracle_text: c.oracle_text || '',
     power: c.power, toughness: c.toughness, loyalty: c.loyalty, defense: c.defense,
@@ -446,17 +497,19 @@ function slim(c) {
   };
 }
 
-async function fetchCards(onProgress) {
+async function fetchSource(src, onProgress) {
   let url = 'https://api.scryfall.com/cards/search?' +
-    new URLSearchParams({ q: SET_QUERY, order: 'set', unique: 'prints' }).toString();
+    new URLSearchParams({ q: src.q, order: 'set', unique: src.unique }).toString();
   const out = [];
   while (url) {
     const res = await fetch(url, { headers: { Accept: 'application/json;q=0.9,*/*;q=0.8' } });
     const body = await res.json().catch(() => null);
+    // Scryfall answers 404 when a search matches nothing (for example, before a set is added).
+    if (res.status === 404 && body && body.object === 'error' && !out.length) return [];
     if (!res.ok || !body || body.object === 'error') {
       throw new Error((body && body.details) || `Scryfall answered with status ${res.status}.`);
     }
-    out.push(...body.data.map(slim));
+    out.push(...body.data.map(c => slim(c, src.key)));
     onProgress(out.length, body.total_cards || out.length);
     url = body.has_more ? body.next_page : null;
     if (url) await sleep(150); // Scryfall asks for a short pause between requests.
@@ -465,35 +518,280 @@ async function fetchCards(onProgress) {
   return out;
 }
 
-function setCards(cards, fetchedAt) {
-  state.cards = cards; state.fetchedAt = fetchedAt;
+async function fetchCards(onProgress) {
+  const cards = []; const counts = {};
+  for (let i = 0; i < SOURCES.length; i++) {
+    if (i) await sleep(150);
+    const src = SOURCES[i];
+    const list = await fetchSource(src, (n, total) => onProgress(src.label, n, total));
+    counts[src.key] = list.length;
+    cards.push(...list);
+  }
+  if (!counts.trk) throw new Error('Scryfall returned no Star Trek cards.');
+  return { cards, counts };
+}
+
+function setCards(cards, fetchedAt, counts) {
+  state.cards = cards; state.fetchedAt = fetchedAt; state.counts = counts || {};
   state.byId = new Map(cards.map(c => [c.id, c]));
   if (!state.byId.has(state.ui.currentId)) state.ui.currentId = cards.length ? cards[0].id : null;
 }
 
-async function refreshCards() {
+// quiet: refresh in the background without a loading screen; only speak up about new cards.
+async function refreshCards({ quiet = false } = {}) {
   if (state.loading) return;
-  state.loading = true; state.loadError = null;
-  renderAll();
+  state.loading = true;
+  if (!quiet) { state.loadError = null; renderAll(); }
   const oldIds = new Set(state.cards.map(c => c.id));
   try {
-    const cards = await fetchCards((n, total) => {
-      if (!state.cards.length) showEmpty(`<p>Loading cards from Scryfall: ${n} of ${total}.</p>`);
+    const { cards, counts } = await fetchCards((label, n, total) => {
+      if (!state.cards.length) showEmpty(`<p>Loading cards from Scryfall: ${esc(label)}, ${n} of ${total}.</p>`);
     });
-    if (!cards.length) throw new Error('Scryfall returned no cards for this set.');
-    const fetchedAt = new Date().toISOString();
-    setCards(cards, fetchedAt);
-    writeJSON(KEYS.cards, { fetchedAt, query: SET_QUERY, cards });
+    const fetchedAt = nowISO();
+    setCards(cards, fetchedAt, counts);
+    state.loadError = null;
+    writeJSON(KEYS.cards, { version: CARD_LIST_VERSION, fetchedAt, counts, cards });
     const added = cards.filter(c => !oldIds.has(c.id)).length;
-    toast(oldIds.size ? (added ? `Card list refreshed. ${plural(added, 'new card')}.` : 'Card list refreshed. No new cards.')
-                      : `Loaded ${cards.length} cards.`);
+    if (!oldIds.size) toast(`Loaded ${cards.length} cards.`);
+    else if (added) toast(`Card list updated: ${plural(added, 'new card')}.`);
+    else if (!quiet) toast('Card list refreshed. No new cards.');
   } catch (e) {
     state.loadError = e.message || String(e);
-    toast(`Couldn’t load cards: ${state.loadError}`, true);
+    if (!quiet) toast(`Couldn’t load cards: ${state.loadError}`, true);
   } finally {
     state.loading = false;
     renderAll();
   }
+}
+function refreshIfStale() {
+  if (state.loading || !state.cards.length) return;
+  const age = Date.now() - Date.parse(state.fetchedAt || 0);
+  if (!(age < REFRESH_AFTER_MS)) refreshCards({ quiet: true });
+}
+
+// ---------------------------------------------------------------------------
+// Sync with a secret GitHub gist
+// ---------------------------------------------------------------------------
+const SYNC_DEFAULT = { token: '', gistId: '', gistUrl: '', login: '', lastRev: '', dirty: false, lastSyncAt: null };
+let sync = Object.assign({}, SYNC_DEFAULT, readJSON(KEYS.sync) || {});
+const syncRun = { busy: false, again: false, timer: null, status: 'off', error: null };
+const connected = () => !!(sync.token && sync.gistId);
+const saveSync = () => writeJSON(KEYS.sync, sync);
+
+class SyncError extends Error { constructor(kind, msg) { super(msg); this.kind = kind; } }
+const SHORT_ERROR = {
+  offline: 'Offline. Will sync when connected',
+  auth: 'Sync stopped: token not accepted',
+  scope: 'Sync stopped: token can’t use gists',
+  bad: 'Sync stopped: gist file unreadable',
+  http: 'Sync problem. Will retry',
+};
+
+async function gh(path, { method = 'GET', body, allow404 = false } = {}) {
+  let res;
+  try {
+    res = await fetch('https://api.github.com' + path, {
+      method, cache: 'no-store',
+      headers: Object.assign(
+        { Accept: 'application/vnd.github+json', Authorization: `Bearer ${sync.token}` },
+        body ? { 'Content-Type': 'application/json' } : {}),
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    throw new SyncError('offline', 'Couldn’t reach GitHub. Your changes are saved on this computer and will sync when the connection is back.');
+  }
+  if (res.status === 401) throw new SyncError('auth', 'GitHub didn’t accept your token. It may have expired or been deleted. Paste a new token below.');
+  if (res.status === 404 && allow404) return null;
+  if (res.status === 403 || res.status === 404) throw new SyncError('scope', 'GitHub refused the request. Make sure your token has the “gist” box checked, then paste it again below.');
+  if (!res.ok) throw new SyncError('http', `GitHub answered with status ${res.status}. The app will try again shortly.`);
+  return res.status === 204 ? null : res.json();
+}
+
+async function findGist() {
+  for (let page = 1; page <= 5; page++) {
+    const list = await gh(`/gists?per_page=100&page=${page}`);
+    const hit = list.find(g => g.files && g.files[GIST_FILE]);
+    if (hit) return hit;
+    if (list.length < 100) break;
+  }
+  return null;
+}
+
+// Returns the saved data, null if the gist is gone, or { missingFile: true }.
+async function readGist() {
+  const g = await gh(`/gists/${sync.gistId}`, { allow404: true });
+  if (!g) return null;
+  sync.gistUrl = g.html_url;
+  const f = g.files && g.files[GIST_FILE];
+  if (!f) return { missingFile: true };
+  let text = f.content;
+  if (f.truncated) text = await (await fetch(f.raw_url, { cache: 'no-store' })).text();
+  let data;
+  try { data = JSON.parse(text); } catch { throw new SyncError('bad', 'The file in your gist isn’t readable. Choose “Keep this computer’s version” by syncing again, or fix the gist on GitHub.'); }
+  if (!validUser(data)) throw new SyncError('bad', 'The file in your gist doesn’t look like TRK Tagger data.');
+  return data;
+}
+
+async function pushLocal() {
+  if (!state.user.rev) state.user.rev = uid('rev');
+  const rev = state.user.rev;
+  const files = { [GIST_FILE]: { content: JSON.stringify(state.user, null, 1) } };
+  const g = sync.gistId
+    ? await gh(`/gists/${sync.gistId}`, { method: 'PATCH', body: { files } })
+    : await gh('/gists', { method: 'POST', body: { description: 'TRK Tagger tags and notes', public: false, files } });
+  sync.gistId = g.id; sync.gistUrl = g.html_url;
+  sync.lastRev = rev;
+  sync.dirty = state.user.rev !== rev; // something changed while we were saving
+  sync.lastSyncAt = nowISO();
+  saveSync();
+}
+
+function adoptRemote(remote, announce = true) {
+  state.user = remote;
+  writeJSON(KEYS.user, remote);
+  sync.lastRev = revOf(remote); sync.dirty = false; sync.lastSyncAt = nowISO();
+  saveSync();
+  renderAll();
+  if (announce) toast('Loaded your latest tags from GitHub.');
+}
+
+function mergeUsers(base, other) {
+  const out = JSON.parse(JSON.stringify(base));
+  const catByName = new Map(out.categories.map(c => [c.name.toLowerCase(), c]));
+  const catMap = new Map();
+  for (const c of other.categories) {
+    let m = catByName.get(c.name.toLowerCase());
+    if (!m) {
+      m = { id: out.categories.some(x => x.id === c.id) ? uid('cat') : c.id, name: c.name, color: c.color };
+      out.categories.push(m); catByName.set(m.name.toLowerCase(), m);
+    }
+    catMap.set(c.id, m.id);
+  }
+  const tagByName = new Map(out.tags.map(t => [t.name.toLowerCase(), t]));
+  const tagMap = new Map();
+  for (const t of other.tags) {
+    let m = tagByName.get(t.name.toLowerCase());
+    if (!m) {
+      m = { id: out.tags.some(x => x.id === t.id) ? uid('tag') : t.id, name: t.name,
+            categoryId: catMap.get(t.categoryId) || (out.categories[0] || {}).id };
+      out.tags.push(m); tagByName.set(m.name.toLowerCase(), m);
+    }
+    tagMap.set(t.id, m.id);
+  }
+  for (const [id, r] of Object.entries(other.cards)) {
+    const dst = out.cards[id] || (out.cards[id] = { name: r.name, tags: [], note: '' });
+    for (const t of r.tags) { const m = tagMap.get(t); if (m && !dst.tags.includes(m)) dst.tags.push(m); }
+    const a = (dst.note || '').trim(), b = (r.note || '').trim();
+    if (b && a !== b) dst.note = a ? `${a}\n\n${b}` : b;
+  }
+  return out;
+}
+
+function askWhichVersion(remote, title) {
+  const d = $('#conflict');
+  const summary = u => `${plural(Object.values(u.cards).filter(r => r.tags.length).length, 'tagged card')}, ${plural(u.tags.length, 'tag')}, last change ${fmtDate(u.updatedAt)}`;
+  $('#conflict-title').textContent = title;
+  $('#conflict-body').textContent = 'Choose which version to keep. Whatever you pick becomes the version on every computer.';
+  $('#conflict-facts').innerHTML = `<li>Your gist: ${esc(summary(remote))}</li><li>This computer: ${esc(summary(state.user))}</li>`;
+  return new Promise(resolve => {
+    const onClick = e => {
+      const b = e.target.closest('[data-choice]'); if (!b) return;
+      d.removeEventListener('click', onClick);
+      d.close();
+      resolve(b.dataset.choice);
+    };
+    d.addEventListener('click', onClick);
+    d.addEventListener('cancel', e => e.preventDefault(), { once: true });
+    d.showModal();
+  });
+}
+
+async function settle(remote, title) {
+  const choice = await askWhichVersion(remote, title);
+  if (choice === 'remote') { adoptRemote(remote); return; }
+  if (choice === 'combine') {
+    state.user = mergeUsers(remote, state.user);
+    state.user.updatedAt = nowISO(); state.user.rev = uid('rev');
+    writeJSON(KEYS.user, state.user);
+    renderAll();
+  }
+  await pushLocal();
+  toast(choice === 'combine' ? 'Combined. Every computer now has both sets of tags.' : 'Kept this computer’s version.');
+}
+
+function setSync(status, error = null) {
+  syncRun.status = status; syncRun.error = error;
+  renderSyncLine();
+  if (state.ui.view === 'data') renderData();
+}
+
+function scheduleSync() {
+  clearTimeout(syncRun.timer);
+  renderSyncLine();
+  syncRun.timer = setTimeout(syncNow, 2500);
+}
+
+async function syncNow() {
+  clearTimeout(syncRun.timer);
+  if (!connected()) return;
+  if (syncRun.busy) { syncRun.again = true; return; }
+  syncRun.busy = true; setSync('busy');
+  try {
+    const remote = await readGist();
+    if (!remote) { sync.gistId = ''; await pushLocal(); toast('Your gist was missing, so a new one was created.'); }
+    else if (remote.missingFile) await pushLocal();
+    else if (revOf(remote) === sync.lastRev) { if (sync.dirty) await pushLocal(); else { sync.lastSyncAt = nowISO(); saveSync(); } }
+    else if (!sync.dirty) adoptRemote(remote);
+    else await settle(remote, 'Your tags changed in two places');
+    setSync('ok');
+  } catch (e) {
+    setSync('error', e);
+    if (e.kind === 'http') { clearTimeout(syncRun.timer); syncRun.timer = setTimeout(syncNow, 30000); }
+  } finally {
+    syncRun.busy = false;
+    if (syncRun.again) { syncRun.again = false; syncNow(); }
+  }
+}
+
+async function connect(token) {
+  sync = Object.assign({}, SYNC_DEFAULT, { token: token.trim() });
+  setSync('busy');
+  try {
+    const me = await gh('/user');
+    sync.login = me.login;
+    const found = await findGist();
+    if (found) {
+      sync.gistId = found.id; sync.gistUrl = found.html_url;
+      const remote = await readGist();
+      if (!remote || remote.missingFile || !hasCardData(remote)) {
+        await pushLocal();
+        toast('Connected. Your gist now has this computer’s tags.');
+      } else if (!hasCardData(state.user)) {
+        adoptRemote(remote, false);
+        toast('Connected. Loaded your tags from GitHub.');
+      } else {
+        await settle(remote, 'This computer and your gist both have tags');
+      }
+    } else {
+      sync.gistId = '';
+      await pushLocal();
+      toast('Connected. Created a secret gist for your tags.');
+    }
+    saveSync();
+    setSync('ok');
+  } catch (e) {
+    sync = Object.assign({}, SYNC_DEFAULT); saveSync();
+    setSync('off', e);
+    toast(e.message, true);
+  }
+}
+
+function disconnect() {
+  if (!confirm('Stop syncing on this computer? Your tags stay here and in your gist. You can connect again any time.')) return;
+  clearTimeout(syncRun.timer);
+  sync = Object.assign({}, SYNC_DEFAULT); saveSync();
+  setSync('off');
+  toast('This computer stopped syncing.');
 }
 
 // ---------------------------------------------------------------------------
@@ -507,6 +805,7 @@ function matches(card, ignoreStatus = false) {
     else if (!u.colors.length || !ci.every(c => u.colors.includes(c))) return false;
   }
   if (u.rarities.length && !u.rarities.includes(card.rarity)) return false;
+  if (u.sets && u.sets.length && !u.sets.includes(card.src || 'trk')) return false;
   if (!ignoreStatus) {
     if (u.status === 'untagged' && isTagged(card.id)) return false;
     if (u.status === 'tagged' && !isTagged(card.id)) return false;
@@ -537,7 +836,6 @@ function goTo(id) {
   state.ui.currentId = id; state.face = 0;
   saveUI();
   renderReview();
-  // Warm up the next card's image so moving on feels instant.
   const q = queue(); const i = q.findIndex(c => c.id === id);
   const nxt = q[i + 1]; if (nxt && nxt.img) { const im = new Image(); im.src = nxt.img; }
 }
@@ -597,6 +895,19 @@ function renderStatus() {
   const n = state.cards.length;
   const tagged = state.cards.filter(c => isTagged(c.id)).length;
   $('#status').textContent = n ? `${tagged} of ${n} cards tagged` : '';
+  renderSyncLine();
+}
+
+function renderSyncLine() {
+  const el = $('#sync-line');
+  let text = '', warn = false;
+  if (!connected() && syncRun.status !== 'busy') text = 'Saved on this computer only';
+  else if (syncRun.status === 'busy') text = 'Syncing…';
+  else if (syncRun.status === 'error') { text = SHORT_ERROR[syncRun.error && syncRun.error.kind] || 'Sync problem'; warn = true; }
+  else if (sync.dirty) text = 'Saving…';
+  else text = sync.lastSyncAt ? `Synced ${fmtTime(sync.lastSyncAt)}` : 'Synced';
+  el.textContent = text;
+  el.classList.toggle('warn', warn);
 }
 
 function showEmpty(html) {
@@ -609,6 +920,7 @@ function renderQueueControls() {
   $$('[data-color]').forEach(b => b.setAttribute('aria-pressed', u.colors.includes(b.dataset.color)));
   $('[data-colorless]').setAttribute('aria-pressed', u.colorless);
   $$('[data-rarity]').forEach(b => b.setAttribute('aria-pressed', u.rarities.includes(b.dataset.rarity)));
+  $$('[data-set]').forEach(b => b.setAttribute('aria-pressed', (u.sets || []).includes(b.dataset.set)));
   $$('[data-status]').forEach(b => b.setAttribute('aria-pressed', u.status === b.dataset.status));
 }
 
@@ -635,16 +947,21 @@ function renderReview() {
   const img = hasFaceImages ? c.faces[state.face % c.faces.length].img : c.img;
   const el = $('#card-img');
   if (img) el.src = img; else el.removeAttribute('src');
-  el.alt = c.name;
+  el.alt = c.alt || c.name;
   $('#flip').hidden = !hasFaceImages;
   $('#card-link').href = c.uri;
 
   $('#card-name').textContent = c.name;
+  const altEl = $('#card-alt');
+  altEl.hidden = !c.alt; altEl.textContent = c.alt ? `Printed as “${c.alt}”` : '';
   $('#card-cost').innerHTML = c.faces ? '' : symbols(c.mana_cost);
-  const pt = (o) => o.power != null ? `${o.power}/${o.toughness}` : o.loyalty != null ? `Loyalty ${o.loyalty}` : o.defense != null ? `Defense ${o.defense}` : '';
-  $('#card-type').innerHTML = [esc(c.faces ? c.faces.map(f => f.type_line).join(' // ') : c.type_line),
-    esc(RARITY_NAME[c.rarity] || c.rarity), `#${esc(c.cn)}`, esc(c.faces ? '' : pt(c))]
-    .filter(Boolean).map(s => `<span>${s}</span>`).join('');
+  const pt = o => o.power != null ? `${o.power}/${o.toughness}` : o.loyalty != null ? `Loyalty ${o.loyalty}` : o.defense != null ? `Defense ${o.defense}` : '';
+  $('#card-type').innerHTML = [
+    esc(c.faces ? c.faces.map(f => f.type_line).join(' // ') : c.type_line),
+    esc(RARITY_NAME[c.rarity] || c.rarity),
+    `${c.src === 'sds' ? 'Stardates ' : ''}#${esc(c.cn)}`,
+    esc(c.faces ? '' : pt(c)),
+  ].filter(Boolean).map(s => `<span>${s}</span>`).join('');
 
   const faces = c.faces || [c];
   $('#card-text').innerHTML = faces.map(f => `
@@ -729,24 +1046,64 @@ function renderTags() {
 
 function renderData() {
   const u = state.user;
+  const err = syncRun.error;
+
+  // Sync
+  let syncHTML = '<h3 class="section">Sync across computers</h3>';
+  if (!connected()) {
+    syncHTML += `
+      <p>Connect this computer to your GitHub account to keep your tags the same on every computer you use. Paste the token you created with only the “gist” box checked. It stays in this browser and is only ever sent to GitHub.</p>
+      ${err ? `<p class="warn-text small">${esc(err.message)}</p>` : ''}
+      <form class="row" id="sync-form">
+        <input type="password" id="sync-token" placeholder="GitHub token" autocomplete="off" aria-label="GitHub token">
+        <button type="submit" class="go"${syncRun.status === 'busy' ? ' disabled' : ''}>${syncRun.status === 'busy' ? 'Connecting…' : 'Connect'}</button>
+      </form>
+      <p class="muted small">Do this once on each computer. The first computer you connect creates a secret gist in your account; the others find it automatically.</p>`;
+  } else {
+    syncHTML += `
+      <p>Syncing with a secret gist in the GitHub account ${esc(sync.login || 'you connected')}. ${sync.lastSyncAt ? `Last synced ${esc(fmtDate(sync.lastSyncAt))}.` : ''} Changes save to GitHub a few seconds after you make them, and the app checks for changes from your other computers whenever you come back to it.</p>
+      ${syncRun.status === 'error' && err ? `<p class="warn-text small">${esc(err.message)}</p>` : ''}
+      <div class="row">
+        <button type="button" class="go" data-action="sync-now"${syncRun.status === 'busy' ? ' disabled' : ''}>Sync now</button>
+        ${sync.gistUrl ? `<a class="btn quiet" href="${esc(sync.gistUrl)}" target="_blank" rel="noopener">Open the gist on GitHub</a>` : ''}
+        <button type="button" class="quiet" data-action="disconnect">Stop syncing on this computer</button>
+      </div>
+      <form class="row" id="sync-form">
+        <input type="password" id="sync-token" placeholder="New GitHub token" autocomplete="off" aria-label="New GitHub token">
+        <button type="submit">Replace token</button>
+      </form>
+      <p class="muted small">Only needed if your token expires. Paste the new one here on each computer.</p>`;
+  }
+  $('#data-sync').innerHTML = syncHTML;
+
+  // Card list
+  const n = state.counts || {};
+  const sdsLine = state.cards.length
+    ? (n.sds ? ` and ${n.sds} Stardates cards` : '. Scryfall doesn’t list any Stardates cards yet; they’ll appear after a refresh once it does')
+    : '';
+  $('#data-cards').innerHTML = `
+    <h3 class="section">Card list</h3>
+    <p>${state.cards.length
+      ? `${n.trk ?? state.cards.length} Star Trek cards (collector numbers 1 to 306, without basic lands)${sdsLine}. Last refreshed ${esc(fmtDate(state.fetchedAt))}.`
+      : 'No cards loaded yet.'}</p>
+    ${state.loadError && state.cards.length ? `<p class="warn-text small">The last refresh didn’t work: ${esc(state.loadError)}</p>` : ''}
+    <div class="row"><button type="button" class="go" data-action="refresh"${state.loading ? ' disabled' : ''}>${state.loading ? 'Refreshing…' : 'Refresh card list'}</button></div>
+    <p class="muted small">The app refreshes the list on its own once a day when you open it. Refreshing picks up corrected text and new scans. Your tags and notes stay as they are.</p>`;
+
+  // Tags and notes
   const taggedIds = Object.keys(u.cards).filter(id => u.cards[id].tags.length);
   const noted = Object.values(u.cards).filter(r => (r.note || '').trim()).length;
   const orphans = state.cards.length ? Object.keys(u.cards).filter(id => !state.byId.has(id)).length : 0;
-  $('#data-cards').innerHTML = `
-    <h3 class="section">Card list</h3>
-    <p>${state.cards.length ? `${state.cards.length} cards from Scryfall: Star Trek, collector numbers 1 to 306, without basic lands. Last refreshed ${esc(fmtDate(state.fetchedAt))}.` : 'No cards loaded yet.'}</p>
-    <div class="row"><button type="button" class="go" data-action="refresh"${state.loading ? ' disabled' : ''}>${state.loading ? 'Refreshing…' : 'Refresh card list'}</button></div>
-    <p class="muted small">Refreshing picks up newly previewed cards and text fixes. Your tags and notes stay as they are.</p>`;
   $('#data-user').innerHTML = `
     <h3 class="section">Your tags and notes</h3>
     <p>${plural(u.tags.length, 'tag')} in ${plural(u.categories.length, 'category', 'categories')}. ${plural(taggedIds.length, 'card')} tagged, ${noted} with notes. Last change ${esc(fmtDate(u.updatedAt))}.</p>
     ${orphans ? `<p class="muted small">${plural(orphans, 'tagged card')} ${orphans === 1 ? 'isn’t' : 'aren’t'} in the current card list. Their tags are kept.</p>` : ''}
-    <p class="muted small">Everything is saved in this browser on this computer. Export a file now and then as a backup.</p>
+    <p class="muted small">${connected() ? 'Saved in this browser and in your gist.' : 'Saved in this browser on this computer only.'} An exported file makes a good extra backup.</p>
     <div class="row">
       <button type="button" data-action="export">Export to file</button>
       <button type="button" class="quiet" data-action="import">Import from file</button>
     </div>
-    <p class="muted small">Importing replaces all tags, categories, and notes here with the file’s contents.</p>`;
+    <p class="muted small">Importing replaces all tags, categories, and notes here with the file’s contents${connected() ? ', and then on your other computers too' : ''}.</p>`;
 }
 
 function renderAll() {
@@ -783,7 +1140,7 @@ function exportFile() {
   const blob = new Blob([JSON.stringify(state.user, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `trk-tags-${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = `trk-tags-${nowISO().slice(0, 10)}.json`;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   toast('Exported.');
@@ -814,18 +1171,30 @@ function bind() {
     if (act === 'refresh') refreshCards();
     if (act === 'export') exportFile();
     if (act === 'import') $('#import-file').click();
+    if (act === 'sync-now') syncNow();
+    if (act === 'disconnect') disconnect();
   });
   $('#import-file').addEventListener('change', e => {
     const f = e.target.files[0]; if (f) importFile(f); e.target.value = '';
+  });
+  $('#view-data').addEventListener('submit', e => {
+    if (e.target.id !== 'sync-form') return;
+    e.preventDefault();
+    const token = $('#sync-token').value.trim();
+    if (!token) { toast('Paste your GitHub token first.', true); return; }
+    if (connected()) { sync.token = token; saveSync(); syncRun.error = null; syncNow(); toast('Token replaced.'); }
+    else connect(token);
   });
 
   // Queue filters
   $('#queue').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     const u = state.ui;
-    if (b.dataset.color) { const k = b.dataset.color; u.colors = u.colors.includes(k) ? u.colors.filter(x => x !== k) : [...u.colors, k]; }
+    const flip = (arr, k) => arr.includes(k) ? arr.filter(x => x !== k) : [...arr, k];
+    if (b.dataset.color) u.colors = flip(u.colors, b.dataset.color);
     else if (b.hasAttribute('data-colorless')) u.colorless = !u.colorless;
-    else if (b.dataset.rarity) { const k = b.dataset.rarity; u.rarities = u.rarities.includes(k) ? u.rarities.filter(x => x !== k) : [...u.rarities, k]; }
+    else if (b.dataset.rarity) u.rarities = flip(u.rarities, b.dataset.rarity);
+    else if (b.dataset.set) u.sets = flip(u.sets || [], b.dataset.set);
     else if (b.dataset.status) u.status = b.dataset.status;
     else return;
     saveUI(); renderQueueControls(); renderPos();
@@ -873,11 +1242,18 @@ function bind() {
   });
   $('#note').addEventListener('blur', flushNote);
   window.addEventListener('beforeunload', flushNote);
-  document.addEventListener('visibilitychange', () => { if (document.hidden) flushNote(); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { flushNote(); return; }
+    // Coming back to the app: pick up changes from other computers and refresh stale card data.
+    if (connected()) syncNow();
+    refreshIfStale();
+  });
+  window.addEventListener('online', () => { if (connected()) syncNow(); });
 
   // Keyboard shortcuts on the Review screen
   document.addEventListener('keydown', e => {
     if (state.ui.view !== 'review' || e.ctrlKey || e.metaKey || e.altKey) return;
+    if ($('#conflict').open) return;
     if (e.target.closest('input, textarea, select')) return;
     if (e.key === '/') { e.preventDefault(); find.focus(); }
     else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
@@ -949,18 +1325,22 @@ function bind() {
     if (form.classList.contains('tm-add')) {
       const input = form.querySelector('input'); const v = input.value.trim(); if (!v) return;
       if (state.user.tags.some(x => x.name.toLowerCase() === v.toLowerCase())) { toast(`There’s already a tag called “${v}”.`, true); return; }
-      createTag(v, form.closest('[data-cat]').dataset.cat);
+      const catId = form.closest('[data-cat]').dataset.cat;
+      createTag(v, catId);
       renderTags();
-      const again = $(`[data-cat="${form.closest('[data-cat]').dataset.cat}"] .tm-add input`);
+      const again = $(`[data-cat="${catId}"] .tm-add input`);
       if (again) again.focus();
       toast(`Added “${v}”.`);
     }
   });
 
-  // Keep two open tabs in step with each other.
+  // Keep two open tabs on the same computer in step with each other.
   window.addEventListener('storage', e => {
     if (e.key === KEYS.user && e.newValue) {
       try { const u = JSON.parse(e.newValue); if (validUser(u)) { state.user = u; renderAll(); } } catch {}
+    }
+    if (e.key === KEYS.sync && e.newValue) {
+      try { sync = Object.assign({}, SYNC_DEFAULT, JSON.parse(e.newValue)); renderSyncLine(); } catch {}
     }
   });
 }
@@ -988,12 +1368,22 @@ function init() {
   state.user = validUser(u) ? u : seedUser();
   if (!validUser(u)) writeJSON(KEYS.user, state.user);
   const ui = readJSON(KEYS.ui); if (ui) Object.assign(state.ui, ui);
+  if (!Array.isArray(state.ui.sets)) state.ui.sets = [];
+
   const cached = readJSON(KEYS.cards);
-  if (cached && Array.isArray(cached.cards) && cached.cards.length) setCards(cached.cards, cached.fetchedAt);
+  const usable = cached && Array.isArray(cached.cards) && cached.cards.length;
+  if (usable) setCards(cached.cards, cached.fetchedAt, cached.counts);
+
+  if (connected()) syncRun.status = 'ok';
   bind();
   showView(state.ui.view);
   renderStatus();
-  if (!state.cards.length) refreshCards();
+
+  if (!usable) refreshCards();
+  else if (cached.version !== CARD_LIST_VERSION) refreshCards({ quiet: true }); // the list of sets changed
+  else refreshIfStale();
+
+  if (connected()) syncNow();
 }
 init();
 })();
