@@ -1,0 +1,1002 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TRK Tagger</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='18' fill='%23ff9900'/%3E%3Crect x='20' y='20' width='44' height='44' rx='12' fill='%23000'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@400;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --orange: #ff9900; --gold: #ffcc66; --peach: #ffbb99; --lilac: #cc99cc;
+  --violet: #9988dd; --sky: #99ccff; --rose: #dd6666; --tan: #cc9966;
+  --bg: #fbfbfc; --surface: #eef0f3; --fg: #141414; --muted: #5b5f67;
+  --line: #c9ced6; --heading: #a55800; --focus: #0b5cd6;
+  --ui: "Antonio", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --serif: "Source Serif 4", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --side-w: 150px; --top-h: 78px; --bar-h: 28px; --gap: 5px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000; --surface: #131416; --fg: #ece7df; --muted: #a39e96;
+    --line: #3b3a38; --heading: #ff9900; --focus: #99ccff;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--fg); font: 17px/1.5 var(--serif); }
+[hidden] { display: none !important; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ---------- LCARS frame ---------- */
+.frame {
+  display: grid; grid-template-columns: var(--side-w) minmax(0, 1fr);
+  grid-template-rows: var(--top-h) 1fr; min-height: 100vh; padding: 14px 24px 0 14px;
+}
+.elbow { grid-column: 1; grid-row: 1; background: var(--orange); border-top-left-radius: 64px; }
+.top { grid-column: 2; grid-row: 1; position: relative; }
+.top::before, .top::after {
+  content: ""; position: absolute; left: 0; top: var(--bar-h); width: 26px; height: 26px;
+}
+.top::before { background: var(--orange); }
+.top::after { background: var(--bg); border-top-left-radius: 26px; }
+.bar { display: flex; gap: var(--gap); height: var(--bar-h); }
+.bar .fill { flex: 1; background: var(--orange); }
+.bar .title {
+  font: 600 36px/var(--bar-h) var(--ui); color: var(--orange); padding: 0 4px; white-space: nowrap;
+}
+.bar .cap { width: 44px; background: var(--orange); border-radius: 0 14px 14px 0; }
+.status {
+  position: absolute; right: 0; top: calc(var(--bar-h) + 12px);
+  font: 400 18px/1 var(--ui); color: var(--muted);
+}
+.side { grid-column: 1; grid-row: 2; display: flex; flex-direction: column; gap: var(--gap); padding-top: var(--gap); }
+.side button {
+  all: unset; box-sizing: border-box; cursor: pointer; height: 58px; padding: 0 12px 7px;
+  display: flex; align-items: flex-end; justify-content: flex-end;
+  font: 600 21px/1 var(--ui); color: #000; background: var(--lilac);
+}
+.side button:hover { background: var(--gold); }
+.side button[aria-current="page"] { background: var(--orange); }
+.side button:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+.side .seg { height: 22px; background: var(--tan); }
+.side .fill { flex: 1; min-height: 60px; background: var(--peach); }
+main { grid-column: 2; grid-row: 2; padding: 14px 0 48px 30px; min-width: 0; }
+.credit { font: 400 14px/1.4 var(--ui); color: var(--muted); margin-top: 48px; }
+.credit a { color: inherit; }
+
+/* ---------- shared controls ---------- */
+button, .btn {
+  font: 600 16px/1.2 var(--ui); letter-spacing: .02em; border: 0; border-radius: 999px;
+  padding: 7px 16px; background: var(--peach); color: #000; cursor: pointer;
+}
+button:hover, .btn:hover { filter: brightness(1.07); }
+button.quiet { background: transparent; color: var(--fg); box-shadow: inset 0 0 0 1.5px var(--line); }
+button.go { background: var(--orange); }
+button.danger { background: var(--rose); }
+button:disabled { opacity: .45; cursor: default; filter: none; }
+input[type="text"], select, textarea {
+  font: 17px/1.35 var(--serif); color: var(--fg); background: var(--bg);
+  border: 1.5px solid var(--line); border-radius: 10px; padding: 6px 10px;
+}
+select { font-family: var(--ui); font-size: 16px; }
+h2.view-title { font: 600 34px/1.1 var(--ui); color: var(--heading); margin: 6px 0 12px; }
+h3.section { font: 600 24px/1.2 var(--ui); color: var(--heading); margin: 30px 0 8px; }
+.muted { color: var(--muted); }
+.small { font-size: 15px; }
+kbd {
+  font: 600 14px/1 var(--ui); padding: 2px 6px; border-radius: 5px;
+  box-shadow: inset 0 0 0 1.5px var(--line); color: var(--fg);
+}
+
+/* ---------- review ---------- */
+.queue { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center; }
+.qgroup { display: flex; align-items: center; gap: 6px; }
+.qlabel { font: 400 16px/1 var(--ui); color: var(--muted); margin-right: 4px; }
+.tog {
+  background: transparent; color: var(--fg); box-shadow: inset 0 0 0 1.5px var(--line);
+  padding: 5px 12px; font-size: 15px;
+}
+.tog[aria-pressed="true"] { background: var(--orange); color: #000; box-shadow: none; }
+.tog.sym-tog { padding: 4px; line-height: 0; }
+.tog.sym-tog img { width: 22px; height: 22px; }
+.tog.sym-tog[aria-pressed="true"] { background: var(--orange); }
+
+.review {
+  display: grid; grid-template-columns: minmax(260px, 400px) minmax(0, 1fr);
+  gap: 36px; align-items: start; margin-top: 22px;
+}
+.card-img {
+  display: block; width: 100%; height: auto; aspect-ratio: 488 / 680;
+  border-radius: 4.75% / 3.4%; background: var(--surface);
+}
+.figure-tools { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; gap: 10px; }
+.figure-tools a { font: 400 15px/1 var(--ui); color: var(--muted); }
+.rules { margin-top: 18px; font-size: 16px; line-height: 1.55; }
+.rules .face + .face { margin-top: 16px; padding-top: 14px; border-top: 1.5px solid var(--line); }
+.rules .face-name { font-weight: 600; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.rules .face-type { font: 400 16px/1.3 var(--ui); color: var(--muted); margin: 2px 0 6px; }
+.rules p { margin: 0 0 6px; }
+.rules .pt { font: 600 16px/1 var(--ui); margin-top: 6px; }
+img.sym { width: 1em; height: 1em; vertical-align: -0.14em; margin: 0 1px; }
+
+.navrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.navrow .pos { font: 400 18px/1 var(--ui); color: var(--muted); min-width: 140px; text-align: center; }
+.navrow .spacer { flex: 1; }
+.headline { margin: 22px 0 4px; display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.headline h2 { font: 600 30px/1.15 var(--serif); margin: 0; }
+.headline .cost img.sym { width: 22px; height: 22px; vertical-align: -3px; }
+.typeline { font: 400 19px/1.3 var(--ui); color: var(--muted); display: flex; gap: 18px; flex-wrap: wrap; }
+
+.tagger { margin-top: 22px; }
+.find { width: 100%; font: 400 18px/1.3 var(--ui); border-radius: 999px; padding: 9px 18px; }
+.hint { font: 400 15px/1.5 var(--ui); color: var(--muted); margin: 8px 4px 0; }
+.group-name {
+  font: 600 16px/1 var(--ui); color: var(--muted); margin: 20px 0 9px;
+  display: flex; align-items: center; gap: 8px;
+}
+.group-name::before { content: ""; width: 22px; height: 10px; border-radius: 5px; background: var(--cat); }
+.chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.chip {
+  font: 400 16px/1.2 var(--ui); padding: 6px 13px; background: transparent; color: var(--fg);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+}
+.chip[aria-pressed="true"] { background: var(--cat); color: #000; font-weight: 600; box-shadow: none; }
+.tagger.finding .chip.hl, .tagger.finding .create-row.hl { outline: 3px solid var(--focus); outline-offset: 2px; }
+.create-row { display: inline-flex; align-items: center; gap: 8px; margin-top: 16px; border-radius: 999px; font: 400 16px/1 var(--ui); }
+.create-row select { padding: 5px 8px; }
+.notes { margin-top: 26px; }
+.notes label { font: 600 16px/1 var(--ui); color: var(--muted); display: block; margin-bottom: 8px; }
+.notes textarea { width: 100%; min-height: 96px; resize: vertical; font-size: 16px; }
+
+.empty { max-width: 60ch; margin-top: 30px; }
+.empty p { margin: 0 0 14px; }
+
+/* ---------- tag manager ---------- */
+.tm-cat { margin-top: 28px; padding-left: 16px; border-left: 10px solid var(--cat); border-radius: 0 0 0 14px; max-width: 900px; }
+.tm-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tm-head .tm-cat-name { font: 600 22px/1.2 var(--ui); width: 260px; }
+.tm-tags { list-style: none; padding: 0; margin: 12px 0 0; }
+.tm-tags li {
+  display: grid; grid-template-columns: minmax(180px, 1fr) 170px 84px auto; gap: 8px;
+  align-items: center; padding: 5px 0; border-bottom: 1px solid var(--line);
+}
+.tm-tags .count { font: 400 15px/1 var(--ui); color: var(--muted); text-align: right; }
+.tm-tags .acts { display: flex; gap: 5px; }
+.icon { padding: 5px 10px; }
+.tm-add { display: flex; gap: 8px; margin-top: 10px; }
+.tm-add input { width: 280px; }
+#tm-add-cat { display: flex; gap: 8px; margin-top: 36px; }
+#tm-add-cat input { width: 280px; }
+
+/* ---------- data ---------- */
+.data-block { max-width: 70ch; }
+.data-block .row { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+
+/* ---------- toast ---------- */
+#toast {
+  position: fixed; right: 24px; bottom: 24px; max-width: 420px; z-index: 10;
+  background: var(--gold); color: #000; font: 600 16px/1.35 var(--ui);
+  padding: 10px 18px; border-radius: 999px; box-shadow: 0 0 0 4px var(--bg);
+}
+#toast.bad { background: var(--rose); }
+
+@media (max-width: 980px) {
+  .review { grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); gap: 24px; }
+}
+@media (max-width: 760px) {
+  :root { --side-w: 96px; }
+  .bar .title { font-size: 28px; }
+  .review { grid-template-columns: 1fr; }
+  .card-img { max-width: 360px; }
+  .tm-tags li { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="elbow" aria-hidden="true"></div>
+  <header class="top">
+    <div class="bar"><span class="fill"></span><span class="title">TRK Tagger</span><span class="cap"></span></div>
+    <div class="status" id="status" aria-live="polite"></div>
+  </header>
+  <nav class="side" aria-label="Screens">
+    <button type="button" data-view="review">Review</button>
+    <button type="button" data-view="tags">Tags</button>
+    <button type="button" data-view="data">Data</button>
+    <span class="seg" aria-hidden="true"></span>
+    <span class="fill" aria-hidden="true"></span>
+  </nav>
+
+  <main>
+    <!-- Review -->
+    <section id="view-review" aria-label="Review cards">
+      <div class="queue" id="queue">
+        <div class="qgroup" role="group" aria-label="Colors">
+          <span class="qlabel">Colors</span>
+          <button type="button" class="tog sym-tog" data-color="W" aria-pressed="false" title="White"><img src="https://svgs.scryfall.io/card-symbols/W.svg" alt="W"></button>
+          <button type="button" class="tog sym-tog" data-color="U" aria-pressed="false" title="Blue"><img src="https://svgs.scryfall.io/card-symbols/U.svg" alt="U"></button>
+          <button type="button" class="tog sym-tog" data-color="B" aria-pressed="false" title="Black"><img src="https://svgs.scryfall.io/card-symbols/B.svg" alt="B"></button>
+          <button type="button" class="tog sym-tog" data-color="R" aria-pressed="false" title="Red"><img src="https://svgs.scryfall.io/card-symbols/R.svg" alt="R"></button>
+          <button type="button" class="tog sym-tog" data-color="G" aria-pressed="false" title="Green"><img src="https://svgs.scryfall.io/card-symbols/G.svg" alt="G"></button>
+          <button type="button" class="tog sym-tog" data-colorless aria-pressed="false" title="Colorless"><img src="https://svgs.scryfall.io/card-symbols/C.svg" alt="C"></button>
+        </div>
+        <div class="qgroup" role="group" aria-label="Rarity">
+          <span class="qlabel">Rarity</span>
+          <button type="button" class="tog" data-rarity="common" aria-pressed="false">Common</button>
+          <button type="button" class="tog" data-rarity="uncommon" aria-pressed="false">Uncommon</button>
+          <button type="button" class="tog" data-rarity="rare" aria-pressed="false">Rare</button>
+          <button type="button" class="tog" data-rarity="mythic" aria-pressed="false">Mythic</button>
+        </div>
+        <div class="qgroup" role="group" aria-label="Show">
+          <span class="qlabel">Show</span>
+          <button type="button" class="tog" data-status="all" aria-pressed="true">All</button>
+          <button type="button" class="tog" data-status="untagged" aria-pressed="false">Untagged</button>
+          <button type="button" class="tog" data-status="tagged" aria-pressed="false">Tagged</button>
+        </div>
+      </div>
+
+      <div class="empty" id="review-empty" hidden></div>
+
+      <div class="review" id="review-main" hidden>
+        <div>
+          <img class="card-img" id="card-img" alt="">
+          <div class="figure-tools">
+            <button type="button" class="quiet" id="flip" hidden>Show other face</button>
+            <a id="card-link" href="#" target="_blank" rel="noopener">Open on Scryfall</a>
+          </div>
+          <div class="rules" id="card-text"></div>
+        </div>
+
+        <div>
+          <div class="navrow">
+            <button type="button" class="quiet" id="prev">Previous</button>
+            <span class="pos" id="pos"></span>
+            <button type="button" class="quiet" id="next">Next</button>
+            <span class="spacer"></span>
+            <button type="button" class="go" id="next-untagged">Next untagged</button>
+          </div>
+          <div class="headline"><h2 id="card-name"></h2><span class="cost" id="card-cost"></span></div>
+          <div class="typeline" id="card-type"></div>
+
+          <div class="tagger" id="tagger">
+            <input type="text" class="find" id="tag-find" placeholder="Find or create a tag" autocomplete="off" aria-label="Find or create a tag">
+            <p class="hint"><kbd>/</kbd> find a tag, <kbd>Enter</kbd> apply it, <kbd>Esc</kbd> done. <kbd>←</kbd> <kbd>→</kbd> move between cards, <kbd>N</kbd> next untagged card.</p>
+            <div id="tag-groups"></div>
+          </div>
+
+          <div class="notes">
+            <label for="note">Notes</label>
+            <textarea id="note" placeholder="Anything worth remembering about this card"></textarea>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tags -->
+    <section id="view-tags" aria-label="Manage tags" hidden>
+      <h2 class="view-title">Tags</h2>
+      <p class="muted" style="max-width:68ch;margin:0">Renaming a tag keeps it on every card it’s already on. Deleting a tag removes it from every card. You can also create tags while reviewing by typing a new name in the tag finder.</p>
+      <div id="tm-list"></div>
+      <form id="tm-add-cat">
+        <input type="text" id="tm-new-cat" placeholder="New category name" aria-label="New category name">
+        <button type="submit">Add category</button>
+      </form>
+    </section>
+
+    <!-- Data -->
+    <section id="view-data" aria-label="Data" hidden>
+      <h2 class="view-title">Data</h2>
+      <div class="data-block" id="data-cards"></div>
+      <div class="data-block" id="data-user"></div>
+      <input type="file" id="import-file" accept=".json,application/json" hidden>
+    </section>
+
+    <p class="credit">Card data and images from <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>. Card images and text © Wizards of the Coast.</p>
+  </main>
+</div>
+<div id="toast" role="status" hidden></div>
+<noscript><p style="padding:24px">TRK Tagger needs JavaScript turned on.</p></noscript>
+
+<script>
+(() => {
+'use strict';
+
+// ---------------------------------------------------------------------------
+// Settings
+// ---------------------------------------------------------------------------
+const SET_QUERY = 'e:trk cn>=1 cn<=306 -t:basic';
+const KEYS = { cards: 'trkTagger.cards.v1', user: 'trkTagger.user.v1', ui: 'trkTagger.ui.v1' };
+const PALETTE = [
+  ['orange', 'Orange', '#ff9900'], ['gold', 'Gold', '#ffcc66'], ['peach', 'Peach', '#ffbb99'],
+  ['lilac', 'Lilac', '#cc99cc'], ['violet', 'Violet', '#9988dd'], ['sky', 'Sky', '#99ccff'],
+  ['rose', 'Rose', '#dd6666'], ['tan', 'Tan', '#cc9966'],
+];
+const HEX = Object.fromEntries(PALETTE.map(p => [p[0], p[2]]));
+const RARITY_NAME = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', mythic: 'Mythic', special: 'Special', bonus: 'Bonus' };
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+const $ = (sel, el = document) => el.querySelector(sel);
+const $$ = (sel, el = document) => Array.from(el.querySelectorAll(sel));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = p => `${p}_${Math.random().toString(36).slice(2, 9)}${Date.now().toString(36).slice(-3)}`;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const hex = name => HEX[name] || HEX.orange;
+const fmtDate = iso => iso ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'never';
+const plural = (n, one, many) => `${n} ${n === 1 ? one : (many || one + 's')}`;
+
+function readJSON(key) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch { return null; }
+}
+function writeJSON(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+  catch (e) { toast(`Couldn’t save in this browser: ${e.message}`, true); return false; }
+}
+
+let toastTimer = null;
+function toast(msg, bad = false) {
+  const t = $('#toast');
+  t.textContent = msg; t.classList.toggle('bad', bad); t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, bad ? 6000 : 2600);
+}
+
+// Mana and tap symbols, drawn with Scryfall's symbol images. Input must already be escaped.
+function sym(escaped) {
+  return escaped.replace(/\{([^}]+)\}/g, (m, code) => {
+    const file = encodeURIComponent(code.replace(/\//g, '').toUpperCase());
+    return `<img class="sym" src="https://svgs.scryfall.io/card-symbols/${file}.svg" alt="{${code}}" title="{${code}}">`;
+  });
+}
+const symbols = raw => sym(esc(raw));
+function rulesHTML(text) {
+  return String(text || '').split('\n').filter(Boolean).map(line => {
+    const withReminder = esc(line).replace(/\(([^)]*)\)/g, '<i>($1)</i>');
+    return `<p>${sym(withReminder)}</p>`;
+  }).join('');
+}
+// If a symbol image fails to load, show its text instead.
+document.addEventListener('error', e => {
+  const t = e.target;
+  if (t && t.tagName === 'IMG' && t.classList.contains('sym')) t.replaceWith(document.createTextNode(t.alt));
+}, true);
+
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
+const state = {
+  cards: [], byId: new Map(), fetchedAt: null, loading: false, loadError: null,
+  user: null,
+  ui: { view: 'review', currentId: null, colors: [], colorless: false, rarities: [], status: 'all', lastCat: null },
+  face: 0,
+  find: { q: '', hl: 0, items: [] },
+};
+
+function seedUser() {
+  const categories = [
+    { id: 'cat_arch', name: 'Archetypes', color: 'lilac' },
+    { id: 'cat_role', name: 'Roles', color: 'orange' },
+    { id: 'cat_study', name: 'Study', color: 'sky' },
+  ];
+  const archetypes = ['WU Spacecraft', 'UB Dilemma', 'BR Klingons & Dies', 'RG Landfall', 'GW Counters',
+    'WB Borg', 'UR Noncreatures', 'BG Graveyard', 'RW 8+ Power', 'GU Strange New Worlds'];
+  const roles = ['Removal – Efficient', 'Removal – Conditional', 'Removal – Soft', 'Answers Artifacts', 'Sweeper',
+    'Counterspell', 'Card Advantage', 'Card Selection', 'Combat Trick', 'Evasion', 'Fixing / Ramp', 'Bomb'];
+  const study = ['Revisit', 'Sleeper', 'Trap', 'Splashable', 'Sideboard'];
+  const tags = [];
+  archetypes.forEach(a => {
+    tags.push({ id: uid('tag'), name: `${a} – Enabler`, categoryId: 'cat_arch' });
+    tags.push({ id: uid('tag'), name: `${a} – Payoff`, categoryId: 'cat_arch' });
+  });
+  roles.forEach(name => tags.push({ id: uid('tag'), name, categoryId: 'cat_role' }));
+  study.forEach(name => tags.push({ id: uid('tag'), name, categoryId: 'cat_study' }));
+  return { app: 'trk-tagger', schema: 1, categories, tags, cards: {}, updatedAt: new Date().toISOString() };
+}
+const validUser = u => !!u && Array.isArray(u.categories) && Array.isArray(u.tags) && !!u.cards && typeof u.cards === 'object';
+
+function saveUser() {
+  state.user.updatedAt = new Date().toISOString();
+  writeJSON(KEYS.user, state.user);
+  renderStatus();
+}
+const saveUI = () => writeJSON(KEYS.ui, state.ui);
+
+const current = () => state.byId.get(state.ui.currentId) || null;
+const cardTags = id => (state.user.cards[id] && state.user.cards[id].tags) || [];
+const isTagged = id => cardTags(id).length > 0;
+function record(card) {
+  return state.user.cards[card.id] || (state.user.cards[card.id] = { name: card.name, tags: [], note: '' });
+}
+function tidy(id) {
+  const r = state.user.cards[id];
+  if (r && !r.tags.length && !(r.note || '').trim()) delete state.user.cards[id];
+}
+function tagCounts() {
+  const m = new Map();
+  for (const r of Object.values(state.user.cards)) for (const t of r.tags) m.set(t, (m.get(t) || 0) + 1);
+  return m;
+}
+
+// ---------------------------------------------------------------------------
+// Scryfall
+// ---------------------------------------------------------------------------
+function slim(c) {
+  const rawFaces = c.card_faces || [];
+  const faces = rawFaces.map(f => ({
+    name: f.name, mana_cost: f.mana_cost || '', type_line: f.type_line || '', oracle_text: f.oracle_text || '',
+    power: f.power, toughness: f.toughness, loyalty: f.loyalty, defense: f.defense,
+    img: f.image_uris ? (f.image_uris.large || f.image_uris.normal) : null,
+  }));
+  return {
+    id: c.id, name: c.name, cn: c.collector_number, rarity: c.rarity,
+    mana_cost: c.mana_cost ?? faces.map(f => f.mana_cost).filter(Boolean).join(' // '),
+    cmc: c.cmc ?? 0, type_line: c.type_line || '', oracle_text: c.oracle_text || '',
+    power: c.power, toughness: c.toughness, loyalty: c.loyalty, defense: c.defense,
+    colors: c.colors || [...new Set(rawFaces.flatMap(f => f.colors || []))],
+    color_identity: c.color_identity || [],
+    img: c.image_uris ? (c.image_uris.large || c.image_uris.normal) : (faces[0] && faces[0].img) || null,
+    faces: faces.length > 1 ? faces : null,
+    uri: c.scryfall_uri || `https://scryfall.com/search?q=${encodeURIComponent('!"' + c.name + '"')}`,
+  };
+}
+
+async function fetchCards(onProgress) {
+  let url = 'https://api.scryfall.com/cards/search?' +
+    new URLSearchParams({ q: SET_QUERY, order: 'set', unique: 'prints' }).toString();
+  const out = [];
+  while (url) {
+    const res = await fetch(url, { headers: { Accept: 'application/json;q=0.9,*/*;q=0.8' } });
+    const body = await res.json().catch(() => null);
+    if (!res.ok || !body || body.object === 'error') {
+      throw new Error((body && body.details) || `Scryfall answered with status ${res.status}.`);
+    }
+    out.push(...body.data.map(slim));
+    onProgress(out.length, body.total_cards || out.length);
+    url = body.has_more ? body.next_page : null;
+    if (url) await sleep(150); // Scryfall asks for a short pause between requests.
+  }
+  out.sort((a, b) => (parseInt(a.cn, 10) - parseInt(b.cn, 10)) || String(a.cn).localeCompare(String(b.cn)));
+  return out;
+}
+
+function setCards(cards, fetchedAt) {
+  state.cards = cards; state.fetchedAt = fetchedAt;
+  state.byId = new Map(cards.map(c => [c.id, c]));
+  if (!state.byId.has(state.ui.currentId)) state.ui.currentId = cards.length ? cards[0].id : null;
+}
+
+async function refreshCards() {
+  if (state.loading) return;
+  state.loading = true; state.loadError = null;
+  renderAll();
+  const oldIds = new Set(state.cards.map(c => c.id));
+  try {
+    const cards = await fetchCards((n, total) => {
+      if (!state.cards.length) showEmpty(`<p>Loading cards from Scryfall: ${n} of ${total}.</p>`);
+    });
+    if (!cards.length) throw new Error('Scryfall returned no cards for this set.');
+    const fetchedAt = new Date().toISOString();
+    setCards(cards, fetchedAt);
+    writeJSON(KEYS.cards, { fetchedAt, query: SET_QUERY, cards });
+    const added = cards.filter(c => !oldIds.has(c.id)).length;
+    toast(oldIds.size ? (added ? `Card list refreshed. ${plural(added, 'new card')}.` : 'Card list refreshed. No new cards.')
+                      : `Loaded ${cards.length} cards.`);
+  } catch (e) {
+    state.loadError = e.message || String(e);
+    toast(`Couldn’t load cards: ${state.loadError}`, true);
+  } finally {
+    state.loading = false;
+    renderAll();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Review queue
+// ---------------------------------------------------------------------------
+function matches(card, ignoreStatus = false) {
+  const u = state.ui;
+  if (u.colors.length || u.colorless) {
+    const ci = card.color_identity;
+    if (!ci.length) { if (!u.colorless) return false; }
+    else if (!u.colors.length || !ci.every(c => u.colors.includes(c))) return false;
+  }
+  if (u.rarities.length && !u.rarities.includes(card.rarity)) return false;
+  if (!ignoreStatus) {
+    if (u.status === 'untagged' && isTagged(card.id)) return false;
+    if (u.status === 'tagged' && !isTagged(card.id)) return false;
+  }
+  return true;
+}
+const queue = () => state.cards.filter(c => matches(c));
+
+function step(dir, pred = c => matches(c), emptyMsg = 'No other cards match these filters.') {
+  const n = state.cards.length;
+  if (!n) return;
+  let i = state.cards.findIndex(c => c.id === state.ui.currentId);
+  if (i < 0) i = dir > 0 ? -1 : 0;
+  for (let k = 1; k <= n; k++) {
+    const j = (((i + dir * k) % n) + n) % n;
+    const c = state.cards[j];
+    if (c.id !== state.ui.currentId && pred(c)) {
+      if (dir > 0 && j < i) toast('Back to the start of this view.');
+      goTo(c.id);
+      return;
+    }
+  }
+  toast(emptyMsg);
+}
+const nextUntagged = () => step(1, c => matches(c, true) && !isTagged(c.id), 'Every card in this view is tagged.');
+
+function goTo(id) {
+  state.ui.currentId = id; state.face = 0;
+  saveUI();
+  renderReview();
+  // Warm up the next card's image so moving on feels instant.
+  const q = queue(); const i = q.findIndex(c => c.id === id);
+  const nxt = q[i + 1]; if (nxt && nxt.img) { const im = new Image(); im.src = nxt.img; }
+}
+
+// ---------------------------------------------------------------------------
+// Tag actions
+// ---------------------------------------------------------------------------
+function toggleTag(tagId) {
+  const c = current(); if (!c) return;
+  const r = record(c);
+  const i = r.tags.indexOf(tagId);
+  if (i >= 0) r.tags.splice(i, 1); else r.tags.push(tagId);
+  tidy(c.id);
+  saveUser();
+  renderTagger(); renderPos();
+}
+
+function createTag(name, categoryId) {
+  name = name.trim();
+  if (!name) return null;
+  const existing = state.user.tags.find(t => t.name.toLowerCase() === name.toLowerCase());
+  if (existing) return existing;
+  if (!state.user.categories.some(c => c.id === categoryId)) {
+    if (!state.user.categories.length) state.user.categories.push({ id: uid('cat'), name: 'General', color: 'orange' });
+    categoryId = state.user.categories[0].id;
+  }
+  const t = { id: uid('tag'), name, categoryId };
+  state.user.tags.push(t);
+  state.ui.lastCat = categoryId; saveUI();
+  saveUser();
+  return t;
+}
+
+function deleteTag(tagId) {
+  for (const [id, r] of Object.entries(state.user.cards)) {
+    r.tags = r.tags.filter(t => t !== tagId); tidy(id);
+  }
+  state.user.tags = state.user.tags.filter(t => t.id !== tagId);
+  saveUser();
+}
+
+function moveInCategory(tagId, dir) {
+  const tags = state.user.tags;
+  const i = tags.findIndex(t => t.id === tagId); if (i < 0) return;
+  const cat = tags[i].categoryId;
+  let j = i + dir;
+  while (j >= 0 && j < tags.length && tags[j].categoryId !== cat) j += dir;
+  if (j < 0 || j >= tags.length) return;
+  [tags[i], tags[j]] = [tags[j], tags[i]];
+  saveUser();
+}
+
+// ---------------------------------------------------------------------------
+// Rendering
+// ---------------------------------------------------------------------------
+function renderStatus() {
+  const n = state.cards.length;
+  const tagged = state.cards.filter(c => isTagged(c.id)).length;
+  $('#status').textContent = n ? `${tagged} of ${n} cards tagged` : '';
+}
+
+function showEmpty(html) {
+  $('#review-main').hidden = true;
+  const e = $('#review-empty'); e.hidden = false; e.innerHTML = html;
+}
+
+function renderQueueControls() {
+  const u = state.ui;
+  $$('[data-color]').forEach(b => b.setAttribute('aria-pressed', u.colors.includes(b.dataset.color)));
+  $('[data-colorless]').setAttribute('aria-pressed', u.colorless);
+  $$('[data-rarity]').forEach(b => b.setAttribute('aria-pressed', u.rarities.includes(b.dataset.rarity)));
+  $$('[data-status]').forEach(b => b.setAttribute('aria-pressed', u.status === b.dataset.status));
+}
+
+function renderPos() {
+  const c = current(); const q = queue();
+  const i = c ? q.findIndex(x => x.id === c.id) : -1;
+  $('#pos').textContent = i >= 0 ? `Card ${i + 1} of ${q.length}` : `${plural(q.length, 'card')} in this view`;
+  renderStatus();
+}
+
+function renderReview() {
+  renderQueueControls();
+  if (!state.cards.length) {
+    if (state.loading) showEmpty('<p>Loading cards from Scryfall.</p>');
+    else if (state.loadError) showEmpty(`<p>Couldn’t load cards from Scryfall: ${esc(state.loadError)}</p><p>Check your internet connection, then try again.</p><button type="button" class="go" data-action="refresh">Try again</button>`);
+    else showEmpty('<p>No cards loaded yet.</p><button type="button" class="go" data-action="refresh">Load cards from Scryfall</button>');
+    return;
+  }
+  $('#review-empty').hidden = true;
+  $('#review-main').hidden = false;
+  const c = current();
+
+  const hasFaceImages = !!(c.faces && c.faces.filter(f => f.img).length > 1);
+  const img = hasFaceImages ? c.faces[state.face % c.faces.length].img : c.img;
+  const el = $('#card-img');
+  if (img) el.src = img; else el.removeAttribute('src');
+  el.alt = c.name;
+  $('#flip').hidden = !hasFaceImages;
+  $('#card-link').href = c.uri;
+
+  $('#card-name').textContent = c.name;
+  $('#card-cost').innerHTML = c.faces ? '' : symbols(c.mana_cost);
+  const pt = (o) => o.power != null ? `${o.power}/${o.toughness}` : o.loyalty != null ? `Loyalty ${o.loyalty}` : o.defense != null ? `Defense ${o.defense}` : '';
+  $('#card-type').innerHTML = [esc(c.faces ? c.faces.map(f => f.type_line).join(' // ') : c.type_line),
+    esc(RARITY_NAME[c.rarity] || c.rarity), `#${esc(c.cn)}`, esc(c.faces ? '' : pt(c))]
+    .filter(Boolean).map(s => `<span>${s}</span>`).join('');
+
+  const faces = c.faces || [c];
+  $('#card-text').innerHTML = faces.map(f => `
+    <div class="face">
+      ${c.faces ? `<div class="face-name">${esc(f.name)} <span>${symbols(f.mana_cost)}</span></div><div class="face-type">${esc(f.type_line)}</div>` : ''}
+      ${rulesHTML(f.oracle_text)}
+      ${c.faces && pt(f) ? `<div class="pt">${esc(pt(f))}</div>` : ''}
+    </div>`).join('');
+
+  const note = state.user.cards[c.id] ? state.user.cards[c.id].note || '' : '';
+  const ta = $('#note'); if (document.activeElement !== ta) ta.value = note;
+
+  renderTagger();
+  renderPos();
+}
+
+function renderTagger() {
+  const c = current();
+  const applied = new Set(c ? cardTags(c.id) : []);
+  const q = state.find.q.trim();
+  const tokens = q.toLowerCase().split(/\s+/).filter(Boolean);
+  const hit = t => tokens.every(tok => t.name.toLowerCase().includes(tok));
+  const items = [];
+  let html = '';
+  for (const cat of state.user.categories) {
+    const tags = state.user.tags.filter(t => t.categoryId === cat.id && hit(t));
+    if (!tags.length) continue;
+    html += `<div class="group" style="--cat:${hex(cat.color)}"><div class="group-name">${esc(cat.name)}</div><div class="chips">`;
+    for (const t of tags) {
+      html += `<button type="button" class="chip" data-tag="${t.id}" data-i="${items.length}" aria-pressed="${applied.has(t.id)}">${esc(t.name)}</button>`;
+      items.push({ type: 'tag', id: t.id });
+    }
+    html += '</div></div>';
+  }
+  const exact = q && state.user.tags.some(t => t.name.toLowerCase() === q.toLowerCase());
+  if (q && !exact) {
+    const def = state.user.categories.some(x => x.id === state.ui.lastCat) ? state.ui.lastCat : (state.user.categories[0] || {}).id;
+    const opts = state.user.categories.map(x => `<option value="${x.id}"${x.id === def ? ' selected' : ''}>${esc(x.name)}</option>`).join('');
+    html += `<div class="create-row" data-i="${items.length}"><button type="button" class="go" data-action="create">Create tag “${esc(q)}”</button>
+      ${opts ? `<span>in</span><select id="create-cat" aria-label="Category for the new tag">${opts}</select>` : ''}</div>`;
+    items.push({ type: 'create' });
+  }
+  if (!html) html = '<p class="muted">No tags yet. Type a name above to create one.</p>';
+  state.find.items = items;
+  if (state.find.hl >= items.length) state.find.hl = Math.max(0, items.length - 1);
+  const box = $('#tag-groups');
+  box.innerHTML = html;
+  const hlEl = box.querySelector(`[data-i="${state.find.hl}"]`);
+  if (hlEl) hlEl.classList.add('hl');
+}
+
+function renderTags() {
+  const counts = tagCounts();
+  const catOpts = sel => state.user.categories.map(x => `<option value="${x.id}"${x.id === sel ? ' selected' : ''}>${esc(x.name)}</option>`).join('');
+  const colorOpts = sel => PALETTE.map(([k, label]) => `<option value="${k}"${k === sel ? ' selected' : ''}>${label}</option>`).join('');
+  $('#tm-list').innerHTML = state.user.categories.map((cat, ci) => {
+    const tags = state.user.tags.filter(t => t.categoryId === cat.id);
+    return `<div class="tm-cat" data-cat="${cat.id}" style="--cat:${hex(cat.color)}">
+      <div class="tm-head">
+        <input type="text" class="tm-cat-name" value="${esc(cat.name)}" aria-label="Category name">
+        <select class="tm-cat-color" aria-label="Category color">${colorOpts(cat.color)}</select>
+        <button type="button" class="quiet icon" data-act="cat-up" aria-label="Move category up"${ci === 0 ? ' disabled' : ''}>↑</button>
+        <button type="button" class="quiet icon" data-act="cat-down" aria-label="Move category down"${ci === state.user.categories.length - 1 ? ' disabled' : ''}>↓</button>
+        <button type="button" class="quiet" data-act="cat-del">Delete category</button>
+      </div>
+      <ul class="tm-tags">${tags.map((t, ti) => `
+        <li data-tag="${t.id}">
+          <input type="text" class="tm-tag-name" value="${esc(t.name)}" aria-label="Tag name">
+          <select class="tm-tag-cat" aria-label="Category">${catOpts(cat.id)}</select>
+          <span class="count">${plural(counts.get(t.id) || 0, 'card')}</span>
+          <span class="acts">
+            <button type="button" class="quiet icon" data-act="up" aria-label="Move up"${ti === 0 ? ' disabled' : ''}>↑</button>
+            <button type="button" class="quiet icon" data-act="down" aria-label="Move down"${ti === tags.length - 1 ? ' disabled' : ''}>↓</button>
+            <button type="button" class="quiet" data-act="del">Delete</button>
+          </span>
+        </li>`).join('')}
+      </ul>
+      <form class="tm-add"><input type="text" placeholder="New tag in ${esc(cat.name)}" aria-label="New tag name"><button type="submit">Add tag</button></form>
+    </div>`;
+  }).join('') || '<p class="muted">No categories yet. Add one below.</p>';
+}
+
+function renderData() {
+  const u = state.user;
+  const taggedIds = Object.keys(u.cards).filter(id => u.cards[id].tags.length);
+  const noted = Object.values(u.cards).filter(r => (r.note || '').trim()).length;
+  const orphans = state.cards.length ? Object.keys(u.cards).filter(id => !state.byId.has(id)).length : 0;
+  $('#data-cards').innerHTML = `
+    <h3 class="section">Card list</h3>
+    <p>${state.cards.length ? `${state.cards.length} cards from Scryfall: Star Trek, collector numbers 1 to 306, without basic lands. Last refreshed ${esc(fmtDate(state.fetchedAt))}.` : 'No cards loaded yet.'}</p>
+    <div class="row"><button type="button" class="go" data-action="refresh"${state.loading ? ' disabled' : ''}>${state.loading ? 'Refreshing…' : 'Refresh card list'}</button></div>
+    <p class="muted small">Refreshing picks up newly previewed cards and text fixes. Your tags and notes stay as they are.</p>`;
+  $('#data-user').innerHTML = `
+    <h3 class="section">Your tags and notes</h3>
+    <p>${plural(u.tags.length, 'tag')} in ${plural(u.categories.length, 'category', 'categories')}. ${plural(taggedIds.length, 'card')} tagged, ${noted} with notes. Last change ${esc(fmtDate(u.updatedAt))}.</p>
+    ${orphans ? `<p class="muted small">${plural(orphans, 'tagged card')} ${orphans === 1 ? 'isn’t' : 'aren’t'} in the current card list. Their tags are kept.</p>` : ''}
+    <p class="muted small">Everything is saved in this browser on this computer. Export a file now and then as a backup.</p>
+    <div class="row">
+      <button type="button" data-action="export">Export to file</button>
+      <button type="button" class="quiet" data-action="import">Import from file</button>
+    </div>
+    <p class="muted small">Importing replaces all tags, categories, and notes here with the file’s contents.</p>`;
+}
+
+function renderAll() {
+  renderStatus();
+  renderReview();
+  renderTags();
+  renderData();
+}
+
+function showView(view) {
+  if (!['review', 'tags', 'data'].includes(view)) view = 'review';
+  state.ui.view = view; saveUI();
+  $$('.side [data-view]').forEach(b => {
+    if (b.dataset.view === view) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+  });
+  $('#view-review').hidden = view !== 'review';
+  $('#view-tags').hidden = view !== 'tags';
+  $('#view-data').hidden = view !== 'data';
+  if (view === 'review') renderReview();
+  if (view === 'tags') renderTags();
+  if (view === 'data') renderData();
+}
+
+// ---------------------------------------------------------------------------
+// Events
+// ---------------------------------------------------------------------------
+let noteTimer = null;
+function flushNote() {
+  if (!noteTimer) return;
+  clearTimeout(noteTimer); noteTimer = null; saveUser();
+}
+
+function exportFile() {
+  const blob = new Blob([JSON.stringify(state.user, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `trk-tags-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast('Exported.');
+}
+
+function importFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    let data;
+    try { data = JSON.parse(reader.result); } catch { toast('That file isn’t valid JSON.', true); return; }
+    if (!validUser(data)) { toast('That file doesn’t look like a TRK Tagger export.', true); return; }
+    const n = Object.keys(data.cards).length;
+    if (!confirm(`Replace everything here with this file? It has ${plural(data.tags.length, 'tag')} and ${plural(n, 'card')} with tags or notes.`)) return;
+    state.user = data; saveUser(); renderAll();
+    toast('Imported.');
+  };
+  reader.readAsText(file);
+}
+
+function bind() {
+  // Screens
+  $$('.side [data-view]').forEach(b => b.addEventListener('click', () => showView(b.dataset.view)));
+
+  // Buttons that appear in several places
+  document.addEventListener('click', e => {
+    const a = e.target.closest('[data-action]'); if (!a) return;
+    const act = a.dataset.action;
+    if (act === 'refresh') refreshCards();
+    if (act === 'export') exportFile();
+    if (act === 'import') $('#import-file').click();
+  });
+  $('#import-file').addEventListener('change', e => {
+    const f = e.target.files[0]; if (f) importFile(f); e.target.value = '';
+  });
+
+  // Queue filters
+  $('#queue').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const u = state.ui;
+    if (b.dataset.color) { const k = b.dataset.color; u.colors = u.colors.includes(k) ? u.colors.filter(x => x !== k) : [...u.colors, k]; }
+    else if (b.hasAttribute('data-colorless')) u.colorless = !u.colorless;
+    else if (b.dataset.rarity) { const k = b.dataset.rarity; u.rarities = u.rarities.includes(k) ? u.rarities.filter(x => x !== k) : [...u.rarities, k]; }
+    else if (b.dataset.status) u.status = b.dataset.status;
+    else return;
+    saveUI(); renderQueueControls(); renderPos();
+  });
+
+  // Card navigation
+  $('#prev').addEventListener('click', () => step(-1));
+  $('#next').addEventListener('click', () => step(1));
+  $('#next-untagged').addEventListener('click', nextUntagged);
+  $('#flip').addEventListener('click', () => { state.face++; renderReview(); });
+
+  // Tag chips and creating tags
+  $('#tag-groups').addEventListener('click', e => {
+    const chip = e.target.closest('.chip');
+    if (chip) { toggleTag(chip.dataset.tag); return; }
+    if (e.target.closest('[data-action="create"]')) createFromFinder();
+  });
+  const find = $('#tag-find');
+  find.addEventListener('input', () => { state.find.q = find.value; state.find.hl = 0; renderTagger(); });
+  find.addEventListener('focus', () => $('#tagger').classList.add('finding'));
+  find.addEventListener('blur', () => $('#tagger').classList.remove('finding'));
+  find.addEventListener('keydown', e => {
+    const items = state.find.items;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (!items.length) return;
+      state.find.hl = (state.find.hl + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+      renderTagger();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const it = items[state.find.hl]; if (!it) return;
+      if (it.type === 'tag') { toggleTag(it.id); clearFinder(); }
+      else createFromFinder();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      if (find.value) clearFinder(); else find.blur();
+    }
+  });
+
+  // Notes
+  $('#note').addEventListener('input', e => {
+    const c = current(); if (!c) return;
+    record(c).note = e.target.value; tidy(c.id);
+    clearTimeout(noteTimer); noteTimer = setTimeout(() => { noteTimer = null; saveUser(); }, 400);
+  });
+  $('#note').addEventListener('blur', flushNote);
+  window.addEventListener('beforeunload', flushNote);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) flushNote(); });
+
+  // Keyboard shortcuts on the Review screen
+  document.addEventListener('keydown', e => {
+    if (state.ui.view !== 'review' || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.target.closest('input, textarea, select')) return;
+    if (e.key === '/') { e.preventDefault(); find.focus(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+    else if (e.key === 'n' || e.key === 'N') nextUntagged();
+    else if ((e.key === 'f' || e.key === 'F') && !$('#flip').hidden) { state.face++; renderReview(); }
+  });
+
+  // Tag manager
+  const tm = $('#view-tags');
+  tm.addEventListener('change', e => {
+    const t = e.target;
+    const catEl = t.closest('[data-cat]'); const tagEl = t.closest('[data-tag]');
+    if (t.classList.contains('tm-cat-name')) {
+      const cat = state.user.categories.find(c => c.id === catEl.dataset.cat);
+      const v = t.value.trim();
+      if (!v) { t.value = cat.name; toast('A category needs a name.', true); return; }
+      cat.name = v; saveUser(); renderTags();
+    } else if (t.classList.contains('tm-cat-color')) {
+      state.user.categories.find(c => c.id === catEl.dataset.cat).color = t.value; saveUser(); renderTags();
+    } else if (t.classList.contains('tm-tag-name')) {
+      const tag = state.user.tags.find(x => x.id === tagEl.dataset.tag);
+      const v = t.value.trim();
+      if (!v) { t.value = tag.name; toast('A tag needs a name.', true); return; }
+      if (state.user.tags.some(x => x.id !== tag.id && x.name.toLowerCase() === v.toLowerCase())) {
+        t.value = tag.name; toast(`There’s already a tag called “${v}”.`, true); return;
+      }
+      tag.name = v; saveUser(); toast('Renamed.');
+    } else if (t.classList.contains('tm-tag-cat')) {
+      state.user.tags.find(x => x.id === tagEl.dataset.tag).categoryId = t.value; saveUser(); renderTags();
+    }
+  });
+  tm.addEventListener('click', e => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const act = b.dataset.act;
+    const catEl = b.closest('[data-cat]'); const tagEl = b.closest('[data-tag]');
+    const cats = state.user.categories;
+    if (act === 'up' || act === 'down') { moveInCategory(tagEl.dataset.tag, act === 'up' ? -1 : 1); renderTags(); }
+    else if (act === 'del') {
+      const tag = state.user.tags.find(x => x.id === tagEl.dataset.tag);
+      const n = tagCounts().get(tag.id) || 0;
+      if (n && !confirm(`Delete “${tag.name}”? It’s on ${plural(n, 'card')}, and it will be removed from them.`)) return;
+      deleteTag(tag.id); renderTags(); toast(`Deleted “${tag.name}”.`);
+    } else if (act === 'cat-up' || act === 'cat-down') {
+      const i = cats.findIndex(c => c.id === catEl.dataset.cat); const j = i + (act === 'cat-up' ? -1 : 1);
+      if (j < 0 || j >= cats.length) return;
+      [cats[i], cats[j]] = [cats[j], cats[i]]; saveUser(); renderTags();
+    } else if (act === 'cat-del') {
+      const cat = cats.find(c => c.id === catEl.dataset.cat);
+      const tags = state.user.tags.filter(t => t.categoryId === cat.id);
+      const msg = tags.length ? `Delete “${cat.name}” and its ${plural(tags.length, 'tag')}? They’ll be removed from every card.` : `Delete “${cat.name}”?`;
+      if (!confirm(msg)) return;
+      tags.forEach(t => deleteTag(t.id));
+      state.user.categories = cats.filter(c => c.id !== cat.id); saveUser(); renderTags();
+      toast(`Deleted “${cat.name}”.`);
+    }
+  });
+  tm.addEventListener('submit', e => {
+    e.preventDefault();
+    const form = e.target;
+    if (form.id === 'tm-add-cat') {
+      const input = $('#tm-new-cat'); const v = input.value.trim(); if (!v) return;
+      const used = state.user.categories.map(c => c.color);
+      const color = (PALETTE.find(p => !used.includes(p[0])) || PALETTE[0])[0];
+      state.user.categories.push({ id: uid('cat'), name: v, color });
+      input.value = ''; saveUser(); renderTags(); toast(`Added “${v}”.`);
+      return;
+    }
+    if (form.classList.contains('tm-add')) {
+      const input = form.querySelector('input'); const v = input.value.trim(); if (!v) return;
+      if (state.user.tags.some(x => x.name.toLowerCase() === v.toLowerCase())) { toast(`There’s already a tag called “${v}”.`, true); return; }
+      createTag(v, form.closest('[data-cat]').dataset.cat);
+      renderTags();
+      const again = $(`[data-cat="${form.closest('[data-cat]').dataset.cat}"] .tm-add input`);
+      if (again) again.focus();
+      toast(`Added “${v}”.`);
+    }
+  });
+
+  // Keep two open tabs in step with each other.
+  window.addEventListener('storage', e => {
+    if (e.key === KEYS.user && e.newValue) {
+      try { const u = JSON.parse(e.newValue); if (validUser(u)) { state.user = u; renderAll(); } } catch {}
+    }
+  });
+}
+
+function clearFinder() {
+  const find = $('#tag-find');
+  find.value = ''; state.find.q = ''; state.find.hl = 0; renderTagger();
+}
+function createFromFinder() {
+  const name = state.find.q.trim(); if (!name) return;
+  const sel = $('#create-cat');
+  const t = createTag(name, sel ? sel.value : state.ui.lastCat);
+  if (!t) return;
+  if (!cardTags(current() ? current().id : '').includes(t.id)) toggleTag(t.id);
+  toast(`Created “${t.name}” and applied it.`);
+  clearFinder();
+  $('#tag-find').focus();
+}
+
+// ---------------------------------------------------------------------------
+// Start
+// ---------------------------------------------------------------------------
+function init() {
+  const u = readJSON(KEYS.user);
+  state.user = validUser(u) ? u : seedUser();
+  if (!validUser(u)) writeJSON(KEYS.user, state.user);
+  const ui = readJSON(KEYS.ui); if (ui) Object.assign(state.ui, ui);
+  const cached = readJSON(KEYS.cards);
+  if (cached && Array.isArray(cached.cards) && cached.cards.length) setCards(cached.cards, cached.fetchedAt);
+  bind();
+  showView(state.ui.view);
+  renderStatus();
+  if (!state.cards.length) refreshCards();
+}
+init();
+})();
+</script>
+</body>
+</html>
